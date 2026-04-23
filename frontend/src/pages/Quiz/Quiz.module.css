@@ -1,0 +1,76 @@
+.quizPage {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+
+.quizCard {
+  width: 100%;
+  max-width: 700px;
+  padding: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.questionText {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.optionsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.optionBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  text-align: left;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.optionBtn:hover {
+  background: rgba(79, 70, 229, 0.1);
+  border-color: var(--color-primary);
+  transform: translateX(5px);
+}
+
+.selected {
+  background: rgba(79, 70, 229, 0.2);
+  border-color: var(--color-primary);
+}
+
+.progress {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.resultCard {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.score {
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--color-secondary);
+}

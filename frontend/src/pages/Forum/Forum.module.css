@@ -1,0 +1,38 @@
+.forumPage {
+  padding: var(--space-xl) 0;
+}
+
+.discussionCard {
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.discussionCard:hover {
+  transform: translateX(5px);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.replies {
+  background: rgba(79, 70, 229, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
