@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, X, Plus, Trash2 } from 'lucide-react';
+import { Save, X, Plus, Trash2, Loader2 } from 'lucide-react';
+import { courseApi } from '../../services/api';
 import styles from './CreateCourse.module.css';
 
 const CreateCourse = () => {
@@ -12,6 +13,8 @@ const CreateCourse = () => {
     duration: '',
     lessons: []
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleAddLesson = () => {
@@ -30,11 +33,17 @@ const CreateCourse = () => {
     setCourse({ ...course, lessons: updatedLessons });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Course Created:', course);
-    // Logic to save to backend
-    navigate('/courses');
+    setLoading(true);
+    setError('');
+    try {
+      await courseApi.create(course);
+      navigate('/courses');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create course. Please ensure you are logged in as an Instructor.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -140,12 +149,15 @@ const CreateCourse = () => {
           ))}
         </div>
 
+        {error && <div className={styles.error}>{error}</div>}
+
         <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: 'var(--space-xl)'}}>
-          <button type="button" onClick={() => navigate('/courses')} className="btn-secondary" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+          <button type="button" onClick={() => navigate('/courses')} className="btn-secondary" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}} disabled={loading}>
             <X size={18} /> Cancel
           </button>
-          <button type="submit" className="btn-primary" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-            <Save size={18} /> Create Course
+          <button type="submit" className="btn-primary" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}} disabled={loading}>
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+            {loading ? 'Creating...' : 'Create Course'}
           </button>
         </div>
       </form>

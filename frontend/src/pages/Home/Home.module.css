@@ -1,74 +1,259 @@
-.heroSection {
-  padding: 100px 0;
-  background: radial-gradient(circle at top right, var(--color-accent), transparent 15%),
-              radial-gradient(circle at bottom left, var(--color-primary), transparent 10%);
-  text-align: center;
-}
-
-.title {
-  font-size: clamp(2.5rem, 8vw, 4.5rem);
-  line-height: 1.1;
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(to right, #f0f6fc, #8b949e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.subtitle {
-  font-size: 1.25rem;
-  color: var(--color-text-muted);
-  max-width: 700px;
-  margin: 0 auto 2.5rem;
-}
-
-.ctaGroup {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-.featuresSection {
-  padding: 80px 0;
-}
-
-.featuresGrid {
+.home {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-bottom: 4rem;
+  gap: 4rem;
 }
 
-.featureCard {
-  padding: 2.5rem;
-  transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.hero {
+  padding: 2.5rem 0 0;
+  margin: 0;
 }
 
-.featureCard:hover {
-  transform: translateY(-10px);
-  border-color: var(--color-accent);
-  background: rgba(31, 111, 235, 0.05);
+.heroLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  min-height: calc(100vh - 140px);
 }
 
-.featureIcon {
-  width: 64px;
-  height: 64px;
-  background: rgba(31, 111, 235, 0.1);
-  border-radius: 16px;
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.8rem;
+}
+
+.heroCopy h1 {
+  font-size: clamp(2.8rem, 5vw, 4.2rem);
+  max-width: 40ch;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.heroCopy p {
+  font-size: 1.15rem;
+  color: var(--color-text-muted);
+  max-width: 80ch;
+  line-height: 1.6;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.statCard {
+  padding: 1rem 1.1rem;
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--color-border);
+}
+
+.statCard strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+}
+
+.statCard span {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.heroVisual {
+  position: relative;
+}
+
+.heroVisual::before {
+  content: '';
+  position: absolute;
+  inset: 8% 6% auto auto;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(14, 165, 164, 0.24), transparent 70%);
+  filter: blur(16px);
+}
+
+.heroPanel {
+  position: relative;
+  padding: 1.4rem;
+  border-radius: 2rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 244, 255, 0.88)),
+    linear-gradient(135deg, rgba(15, 98, 254, 0.12), transparent);
+  box-shadow: var(--shadow-lg);
+  min-height: 430px;
+  display: grid;
+  align-content: start;
+  gap: 1.2rem;
+}
+
+.heroPanelTop {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--color-accent);
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-.featureTitle {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: var(--color-text);
-}
-
-.featureDesc {
+.panelTime {
   color: var(--color-text-muted);
-  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.heroPanel h3 {
+  font-size: 1.7rem;
+}
+
+.progressBlock {
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: white;
+  border: 1px solid var(--color-border);
+  display: grid;
+  gap: 0.8rem;
+}
+
+.progressBlock div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.progressBar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(15, 98, 254, 0.1);
+  overflow: hidden;
+}
+
+.progressBar div {
+  width: 78%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+}
+
+.heroChecklist {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.heroChecklist div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--color-border);
+}
+
+.logoStrip {
+  padding-bottom: 1rem;
+}
+
+.valueSection,
+.featuredSection {
+  padding-bottom: 1rem;
+}
+
+.valueGrid,
+.courseGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.valueCard {
+  padding: 1.4rem;
+}
+
+.valueIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 1rem;
+  color: white;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+}
+
+.valueCard p,
+.courseCard p {
+  color: var(--color-text-muted);
+}
+
+.featuredHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.courseCard {
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(180deg, #10203a, #172554);
+  color: white;
+  display: grid;
+  gap: 1rem;
+  box-shadow: var(--shadow-md);
+}
+
+.courseCard p {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.courseFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.courseFooter a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #9cc2ff;
+  font-weight: 700;
+}
+
+@media (max-width: 960px) {
+  .heroLayout,
+  .valueGrid,
+  .courseGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .featuredHeader {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .statRow {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-top: 1rem;
+  }
+
+  .heroPanel {
+    min-height: auto;
+  }
 }

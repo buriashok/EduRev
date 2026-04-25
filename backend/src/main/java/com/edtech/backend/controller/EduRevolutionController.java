@@ -34,7 +34,7 @@ public class EduRevolutionController {
 
     @PostMapping("/requests")
     public ResponseEntity<EduRequest> createRequest(@RequestBody EduRequest request, @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        User user = userRepository.findById(userPrincipal.getId()).get();
+        User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
         request.setUser(user);
         request.setStatus("PENDING");
         return ResponseEntity.ok(eduRequestRepository.save(request));

@@ -20,6 +20,7 @@ public class RecommendationController {
 
     @GetMapping
     public List<Course> getRecommendations(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        return recommendationService.getRecommendationsForUser(userPrincipal.getId());
+        Long userId = userPrincipal == null ? null : userPrincipal.getId();
+        return recommendationService.getRecommendationsForUser(userId);
     }
 }

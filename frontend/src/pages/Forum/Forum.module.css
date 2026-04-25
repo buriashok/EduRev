@@ -2,9 +2,64 @@
   padding: var(--space-xl) 0;
 }
 
+.header {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.composeBox {
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.composeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.helperText {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.composeRow {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.composeRow input {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.82);
+  outline: none;
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(15, 98, 254, 0.08);
+  color: var(--color-primary);
+}
+
+.loader {
+  color: var(--color-primary);
+  animation: spin 1s linear infinite;
+}
+
+.list {
+  display: grid;
+  gap: 0.9rem;
+}
+
 .discussionCard {
-  padding: var(--space-lg);
-  margin-bottom: var(--space-md);
+  padding: 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -35,4 +90,21 @@
   color: var(--color-primary);
   font-weight: 600;
   font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+@media (max-width: 720px) {
+  .composeHeader,
+  .composeRow,
+  .discussionCard,
+  .meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .composeRow button {
+    width: 100%;
+  }
 }

@@ -17,17 +17,36 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private int jwtExpirationInMs;
 
+    @Value("${jwt.refresh.expiration:604800000}") // Default 7 days
+    private int jwtRefreshExpirationInMs;
+
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     public String generateToken(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        return generateTokenFromUserId(userPrincipal.getId());
+    }
+
+    public String generateTokenFromUserId(Long userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .setSubject(Long.toString(userPrincipal.getId()))
+                .setSubject(Long.toString(userId))
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generateRefreshTokenFromUserId(Long userId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationInMs);
+
+        return Jwts.builder()
+                .setSubject(Long.toString(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

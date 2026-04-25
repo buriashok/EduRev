@@ -1,54 +1,155 @@
 .dashboardPage {
-  padding: var(--space-xl) 0;
-}
-
-.title {
-  font-size: 2.5rem;
-  margin-bottom: var(--space-xl);
+  padding: 2rem 0;
 }
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-lg);
-  margin-bottom: var(--space-2xl);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .statCard {
-  padding: var(--space-xl);
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  align-items: center;
-  text-align: center;
 }
 
-.statValue {
-  font-size: 2.5rem;
-  font-weight: 800;
+.statIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
   color: var(--color-primary);
-  font-family: var(--font-display);
-}
-
-.statLabel {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.chartSection {
-  margin-top: var(--space-xl);
-}
-
-.chartPlaceholder {
-  width: 100%;
-  height: 300px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed var(--color-border);
-  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.statLabel {
   color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.learningSection {
+  margin-bottom: 4rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.courseCount {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.courseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.enrolledCard {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.enrolledCard:hover {
+  transform: translateY(-4px);
+}
+
+.courseInfo h3 {
+  margin: 0.75rem 0 1rem;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dashboardProgressBar {
+  flex: 1;
+  height: 6px;
+  background: var(--color-bg-alt);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dashboardProgressFill {
+  height: 100%;
+  background: #10b981;
+}
+
+.progressPercent {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.continueBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.emptyEnrolled {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed var(--color-border);
+  border-radius: 1.5rem;
+  padding: 4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: var(--color-text-muted);
+}
+
+.infoBanner {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+  .courseGrid {
+    grid-template-columns: 1fr;
+  }
 }

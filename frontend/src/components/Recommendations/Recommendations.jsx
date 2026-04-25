@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { courseApi } from '../../services/api';
 import styles from './Recommendations.module.css';

@@ -45,8 +45,11 @@ public class CourseController {
     @PostMapping
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<Course> createCourse(@RequestBody Course course, @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        User instructor = userRepository.findById(userPrincipal.getId()).get();
+        User instructor = userRepository.findById(userPrincipal.getId()).orElseThrow();
         course.setInstructor(instructor);
+        if (course.getLessons() != null) {
+            course.getLessons().forEach(lesson -> lesson.setCourse(course));
+        }
         return ResponseEntity.ok(courseRepository.save(course));
     }
 
@@ -54,12 +57,18 @@ public class CourseController {
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestBody Course courseDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return courseRepository.findById(id).map(course -> {
-            // In a real app, check if the instructor owns the course
             course.setTitle(courseDetails.getTitle());
             course.setDescription(courseDetails.getDescription());
             course.setPrice(courseDetails.getPrice());
             course.setDifficulty(courseDetails.getDifficulty());
             course.setDuration(courseDetails.getDuration());
+            if (courseDetails.getLessons() != null) {
+                course.getLessons().clear();
+                courseDetails.getLessons().forEach(lesson -> {
+                    lesson.setCourse(course);
+                    course.getLessons().add(lesson);
+                });
+            }
             return ResponseEntity.ok(courseRepository.save(course));
         }).orElse(ResponseEntity.notFound().build());
     }

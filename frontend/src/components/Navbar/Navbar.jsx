@@ -1,129 +1,110 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  BookOpen, Globe, User, LogOut, Settings as SettingsIcon, 
-  ChevronDown, Book, Award, Video, Shield, HelpCircle, Sun, Moon 
-} from 'lucide-react';
-import { userApi } from '../../services/api';
+import { BookOpen, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import styles from './Navbar.module.css';
 
+const publicLinks = [
+  { label: 'Home', path: '/' },
+  { label: 'Courses', path: '/courses' },
+  { label: 'Live Classes', path: '/live-classes' },
+  { label: 'Community', path: '/forum' },
+];
+
+const getDashboardPath = (role) => (role === 'ADMIN' ? '/admin/dashboard' : '/dashboard');
+
 const Navbar = () => {
+  const { user, logout } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem('token');
-  const [profile, setProfile] = useState(null);
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      const fetchProfile = async () => {
-        try {
-          const response = await userApi.getMe();
-          setProfile(response.data);
-        } catch (err) {
-          console.error('Failed to fetch navbar profile:', err);
-        }
-      };
-      fetchProfile();
-    }
-  }, [isLoggedIn]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const handleLogout = async () => {
+    await logout();
+    setDropdownOpen(false);
+    setMobileOpen(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setProfile(null);
-    navigate('/login');
+  const handleNavigate = (path) => {
+    navigate(path);
+    setDropdownOpen(false);
+    setMobileOpen(false);
   };
-
-  const defaultAvatar = `https://ui-avatars.com/api/?name=${profile?.firstName || 'User'}+${profile?.lastName || ''}&background=0d1117&color=c9d1d9`;
 
   return (
     <nav className={styles.navbar}>
-      <div className={`container ${styles.navContainer}`}>
+      <div className={`container ${styles.container}`}>
         <Link to="/" className={styles.logo}>
-          <BookOpen className={styles.logoIcon} size={28} />
-          EduRev
+          <div className={styles.logoMark}>
+            <BookOpen size={18} />
+          </div>
+          <div>
+            <strong>EduRev</strong>
+            <span>Skill-first learning</span>
+          </div>
         </Link>
-        
-        <div className={styles.navLinks}>
-          <Link to="/courses" className={styles.navLink}>Courses</Link>
-          <Link to="/live-classes" className={styles.navLink}>Live</Link>
-          <Link to="/forum" className={styles.navLink}>Community</Link>
-          <Link to="/edu-revolution" className={styles.navLink}>EDU-Rev</Link>
+
+        <div className={styles.links}>
+          {publicLinks.map((link) => (
+            <Link key={link.path} to={link.path} className={styles.link}>
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        <div className={styles.navActions}>
-          <button className={styles.themeToggle} onClick={toggleTheme}>
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        <div className={styles.actions}>
+          <button className={styles.mobileToggle} onClick={() => setMobileOpen((value) => !value)} aria-label="Toggle menu">
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          <button className={styles.langBtn}>
-            <Globe size={18} /> EN
-          </button>
-          
-          {isLoggedIn ? (
-            <div className={styles.profileWrapper}>
-              <div className={styles.profileTrigger}>
-                <img 
-                  src={profile?.profileImage || defaultAvatar} 
-                  alt="Avatar" 
-                  className={styles.navbarAvatar}
-                />
-                <ChevronDown size={14} className={styles.chevron} />
-              </div>
-              
-              <div className={styles.dropdownContent}>
-                <div className={styles.dropdownHeader}>
-                   <img src={profile?.profileImage || defaultAvatar} alt="" className={styles.headerAvatar} />
-                   <div className={styles.headerInfo}>
-                      <span className={styles.userName}>{profile?.firstName} {profile?.lastName}</span>
-                      <span className={styles.userEmail}>{profile?.email}</span>
-                   </div>
+          {user ? (
+            <div className={styles.userMenu}>
+              <button className={styles.profile} onClick={() => setDropdownOpen((value) => !value)}>
+                <img src={user.profileImage || `https://ui-avatars.com/api/?background=0f62fe&color=fff&name=${encodeURIComponent(user.firstName || 'U')}`} alt={user.firstName || 'User'} />
+                <div className={styles.profileText}>
+                  <strong>{user.firstName}</strong>
+                  <span>{user.role}</span>
                 </div>
+                <ChevronDown size={16} className={styles.chevron} />
+              </button>
 
-                <div className={styles.divider} />
-
-                <Link to="/profile" className={styles.dropdownItem}>
-                  <User size={16} /> Your profile
-                </Link>
-                <Link to="/courses" className={styles.dropdownItem}>
-                  <Book size={16} /> Your courses
-                </Link>
-                <Link to="/edu-revolution" className={styles.dropdownItem}>
-                  <Award size={16} /> Your certificates
-                </Link>
-                <Link to="/live-classes" className={styles.dropdownItem}>
-                  <Video size={16} /> Live sessions
-                </Link>
-
-                <div className={styles.divider} />
-
-                <Link to="/profile" className={styles.dropdownItem}>
-                  <SettingsIcon size={16} /> Settings
-                </Link>
-                <Link to="#" className={styles.dropdownItem}>
-                  <Shield size={16} /> Security
-                </Link>
-
-                <div className={styles.divider} />
-
-                <button onClick={handleLogout} className={styles.logoutItem}>
-                  <LogOut size={16} /> Sign out
-                </button>
-              </div>
+              {dropdownOpen && (
+                <div className={styles.dropdown}>
+                  <button onClick={() => handleNavigate(getDashboardPath(user?.role))}>Dashboard</button>
+                  <button onClick={() => handleNavigate('/settings')}>Settings</button>
+                  <button onClick={() => handleNavigate('/settings/sessions')}>Sessions</button>
+                  <hr />
+                  <button onClick={handleLogout}>Sign Out</button>
+                </div>
+              )}
             </div>
           ) : (
-            <Link to="/login" className="btn-primary">Sign In</Link>
+            <div className={styles.authBtns}>
+              <Link to="/login" className={styles.loginBtn}>Sign In</Link>
+              <Link to="/register" className={styles.signupBtn}>
+                <Sparkles size={16} />
+                Start Learning
+              </Link>
+            </div>
           )}
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className={styles.mobileMenu}>
+          {publicLinks.map((link) => (
+            <Link key={link.path} to={link.path} className={styles.mobileLink} onClick={() => setMobileOpen(false)}>
+              {link.label}
+            </Link>
+          ))}
+          {!user && (
+            <div className={styles.mobileAuth}>
+              <Link to="/login" onClick={() => setMobileOpen(false)}>Sign In</Link>
+              <Link to="/register" onClick={() => setMobileOpen(false)}>Create Account</Link>
+            </div>
+          )}
+        </div>
+      )}
     </nav>
   );
 };

@@ -1,66 +1,268 @@
-.loginPage {
-  min-height: calc(100vh - 80px);
+.container {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 0% 0%, rgba(31, 111, 235, 0.1), transparent 40%),
-              radial-gradient(circle at 100% 100%, rgba(35, 134, 54, 0.05), transparent 40%);
+  background-color: #f8fafc;
+  padding: 2rem;
+  font-family: 'Outfit', sans-serif;
 }
 
-.loginCard {
-  width: 100%;
-  max-width: 450px;
+.card {
+  background: #fff;
   padding: 3rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+  width: 100%;
+  max-width: 480px;
   text-align: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 2rem;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-primary);
+  border-radius: 8px;
+  position: relative;
+}
+
+.logoIcon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background-color: #fff;
+  border-radius: 50%;
 }
 
 .title {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 0.5rem;
+  color: var(--color-text);
 }
 
 .subtitle {
   color: var(--color-text-muted);
+  margin-bottom: 2.5rem;
+  font-size: 1rem;
 }
 
-.formGroup {
+.googleBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.googleBtn:hover {
+  background-color: #f1f5f9;
+}
+
+.googleBtn img {
+  width: 20px;
+  height: 20px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.divider span {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   text-align: left;
 }
 
-.label {
+.inputGroup label {
   display: block;
+  font-weight: 600;
   font-size: 0.9rem;
-  font-weight: 500;
   margin-bottom: 0.5rem;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: 1rem;
   color: var(--color-text-muted);
 }
 
-.input {
-  height: 45px;
+.inputWrapper input {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.inputWrapper input:focus {
+  border-color: var(--color-primary);
+}
+
+.eyeIcon {
+  position: absolute;
+  right: 1rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.forgot {
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 .error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-  background: rgba(248, 81, 73, 0.1);
-  padding: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(248, 81, 73, 0.2);
+  color: var(--color-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.submitBtn {
+  width: 100%;
+  background-color: var(--color-primary);
+  color: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.submitBtn:hover {
+  background-color: var(--color-primary-dark);
 }
 
 .footer {
-  margin-top: 2rem;
-  font-size: 0.9rem;
+  margin-top: 2.5rem;
+  font-size: 1rem;
   color: var(--color-text-muted);
 }
 
 .link {
-  color: var(--color-accent);
-  text-decoration: none;
-  font-weight: 600;
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
-.link:hover {
-  text-decoration: underline;
+.otpInput {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.5rem;
+  letter-spacing: 0.5rem;
+  text-align: center;
+  border: 2px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-bg-alt);
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-top: 0.5rem;
+}
+
+.otpInput:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  background: #fff;
+}
+
+.successBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  background: var(--color-primary-light);
+  border-radius: 1rem;
+  color: var(--color-primary);
+  font-weight: 700;
+  margin: 1.5rem 0;
+}
+
+.button {
+  width: 100%;
+  background-color: var(--color-primary);
+  color: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -32,7 +32,7 @@ public class LiveClassController {
     @PostMapping
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<LiveClass> scheduleClass(@RequestBody LiveClass liveClass, @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        User instructor = userRepository.findById(userPrincipal.getId()).get();
+        User instructor = userRepository.findById(userPrincipal.getId()).orElseThrow();
         liveClass.setInstructor(instructor);
         return ResponseEntity.ok(liveClassRepository.save(liveClass));
     }
@@ -41,6 +41,17 @@ public class LiveClassController {
     public ResponseEntity<LiveClass> getClassById(@PathVariable Long id) {
         return liveClassRepository.findById(id)
                 .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/join")
+    public ResponseEntity<?> joinLiveClass(@PathVariable Long id) {
+        return liveClassRepository.findById(id)
+                .map(liveClass -> ResponseEntity.ok().body(java.util.Map.of(
+                        "meetingLink", liveClass.getMeetingLink(),
+                        "title", liveClass.getTitle(),
+                        "startsAt", liveClass.getStartTime()
+                )))
                 .orElse(ResponseEntity.notFound().build());
     }
 }

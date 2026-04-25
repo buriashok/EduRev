@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Video, Calendar, User, Clock, ArrowRight } from 'lucide-react';
-import { liveClassApi } from '../../services/api';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, CalendarDays, Clock3, UserRound, Video } from 'lucide-react';
+import { getErrorMessage, liveClassApi } from '../../services/api';
 import styles from './LiveClasses.module.css';
 
 const LiveClasses = () => {
   const [liveClasses, setLiveClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [referenceNow] = useState(() => Date.now());
 
   useEffect(() => {
     const fetchLiveClasses = async () => {
@@ -13,43 +15,75 @@ const LiveClasses = () => {
         const response = await liveClassApi.getUpcoming();
         setLiveClasses(response.data);
       } catch (error) {
-        console.error('Failed to fetch live classes:', error);
+        setMessage(getErrorMessage(error, 'Failed to load live classes.'));
       } finally {
         setLoading(false);
       }
     };
+
     fetchLiveClasses();
   }, []);
+
+  const upcomingThreshold = useMemo(() => new Date(referenceNow + 24 * 60 * 60 * 1000), [referenceNow]);
+
+  const handleJoin = async (id) => {
+    try {
+      const response = await liveClassApi.join(id);
+      if (response.data?.meetingLink) {
+        window.open(response.data.meetingLink, '_blank', 'noopener,noreferrer');
+      }
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Could not open the live class link.'));
+    }
+  };
+
   return (
     <div className={`container ${styles.livePage}`}>
-      <h1 className={styles.title}>Live Lectures & Webinars</h1>
-      
+      <div className="section-heading">
+        <h1>Live classes that keep learning human</h1>
+        <p>Join workshops, mentor hours, and focused sessions with clear timing and one-click access.</p>
+      </div>
+
+      {message && <div className={styles.message}>{message}</div>}
+
       {loading ? (
-        <div className="flex-center" style={{height: '300px'}}><div className="spinner"></div></div>
+        <div className="flex-center" style={{ minHeight: '280px' }}>
+          <div className="spinner" />
+        </div>
       ) : (
         <div className={styles.grid}>
           {liveClasses.length === 0 ? (
-            <p style={{color: 'var(--color-text-muted)', textAlign: 'center', gridColumn: 'span 3'}}>No live classes scheduled at the moment.</p>
+            <div className={`glass-panel ${styles.emptyState}`}>
+              <Video size={40} />
+              <h3>No live classes scheduled yet</h3>
+              <p>New mentor sessions will appear here as soon as they are published.</p>
+            </div>
           ) : (
-            liveClasses.map(item => (
-              <div key={item.id} className={`glass-panel ${styles.classCard} animate-fade-in`}>
-                <div className={`${styles.status} ${new Date(item.startTime) < new Date() ? styles.live : styles.upcoming}`}>
-                  {new Date(item.startTime) < new Date() && <div className={styles.liveDot}></div>}
-                  {new Date(item.startTime) < new Date() ? 'LIVE' : 'UPCOMING'}
-                </div>
-                
-                <h2 className={styles.classTitle}>{item.title}</h2>
-                
-                <div className={styles.meta}>
-                  <div className={styles.metaItem}><User size={16} /> {item.instructor ? `${item.instructor.firstName} ${item.instructor.lastName}` : 'Guest Speaker'}</div>
-                  <div className={styles.metaItem}><Clock size={16} /> {new Date(item.startTime).toLocaleString()}</div>
-                </div>
+            liveClasses.map((item) => {
+              const startsSoon = new Date(item.startTime) <= upcomingThreshold;
 
-                <button className="btn-primary" style={{marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem'}}>
-                  {new Date(item.startTime) < new Date() ? 'Join Now' : 'Set Reminder'} <ArrowRight size={18} />
-                </button>
-              </div>
-            ))
+              return (
+                <article key={item.id} className={`glass-panel ${styles.classCard} animate-fade-in`}>
+                  <span className={`status-pill ${startsSoon ? 'success' : 'warning'}`}>
+                    <CalendarDays size={14} />
+                    {startsSoon ? 'Starting soon' : 'Upcoming'}
+                  </span>
+
+                  <h2 className={styles.classTitle}>{item.title}</h2>
+                  <p className={styles.description}>{item.description || 'Instructor-led session with time for guided questions and discussion.'}</p>
+
+                  <div className={styles.meta}>
+                    <div className={styles.metaItem}><UserRound size={16} /> {item.instructor ? `${item.instructor.firstName} ${item.instructor.lastName}` : 'Guest mentor'}</div>
+                    <div className={styles.metaItem}><Clock3 size={16} /> {new Date(item.startTime).toLocaleString()}</div>
+                  </div>
+
+                  <button className="btn-primary" onClick={() => handleJoin(item.id)}>
+                    Join room
+                    <ArrowRight size={16} />
+                  </button>
+                </article>
+              );
+            })
           )}
         </div>
       )}

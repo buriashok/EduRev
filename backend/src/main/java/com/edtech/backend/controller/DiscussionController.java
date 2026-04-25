@@ -9,6 +9,7 @@ import com.edtech.backend.repository.UserRepository;
 import com.edtech.backend.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,11 @@ public class DiscussionController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @GetMapping
+    public List<Discussion> getAllDiscussions() {
+        return discussionRepository.findAll();
+    }
 
     @GetMapping("/course/{courseId}")
     public List<Discussion> getDiscussionsByCourse(@PathVariable Long courseId) {
@@ -33,8 +39,9 @@ public class DiscussionController {
     }
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Discussion> createDiscussion(@RequestBody Discussion discussion, @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        User author = userRepository.findById(userPrincipal.getId()).get();
+        User author = userRepository.findById(userPrincipal.getId()).orElseThrow();
         discussion.setAuthor(author);
         return ResponseEntity.ok(discussionRepository.save(discussion));
     }
@@ -45,9 +52,10 @@ public class DiscussionController {
     }
 
     @PostMapping("/{id}/messages")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Message> postMessage(@PathVariable Long id, @RequestBody Message message, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return discussionRepository.findById(id).map(discussion -> {
-            User author = userRepository.findById(userPrincipal.getId()).get();
+            User author = userRepository.findById(userPrincipal.getId()).orElseThrow();
             message.setAuthor(author);
             message.setDiscussion(discussion);
             return ResponseEntity.ok(messageRepository.save(message));

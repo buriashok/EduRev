@@ -1,40 +1,118 @@
-import React from 'react';
-import { MessageSquare, User, Clock, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Loader2, MessageSquareMore, Plus, Send, User } from 'lucide-react';
+import { discussionApi, getErrorMessage } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import styles from './Forum.module.css';
 
-const MOCK_DISCUSSIONS = [
-  { id: 1, title: 'How to handle JWT expiration in React?', author: 'David Smith', replies: 12, time: '2 hours ago' },
-  { id: 2, title: 'Best practices for PostgreSQL indexing', author: 'Emily Blunt', replies: 8, time: '5 hours ago' },
-  { id: 3, title: 'Career advice for full-stack developers', author: 'Michael Jordan', replies: 25, time: '1 day ago' }
-];
-
 const Forum = () => {
+  const { user } = useAuth();
+  const [discussions, setDiscussions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchDiscussions = async () => {
+      try {
+        const response = await discussionApi.getAll();
+        if (mounted) {
+          setDiscussions(response.data);
+        }
+      } catch (error) {
+        if (mounted) {
+          setMessage(getErrorMessage(error, 'Failed to load discussions.'));
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchDiscussions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleCreateDiscussion = async () => {
+    if (!newTitle.trim()) {
+      return;
+    }
+
+    try {
+      const response = await discussionApi.create({ title: newTitle.trim() });
+      setDiscussions((current) => [response.data, ...current]);
+      setNewTitle('');
+      setMessage('');
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Please sign in to create a discussion.'));
+    }
+  };
+
   return (
     <div className={`container ${styles.forumPage}`}>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)'}}>
-        <h1 style={{fontSize: '2.5rem'}}>Discussion Forums</h1>
-        <button className="btn-primary" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-          <Plus size={18} /> New Discussion
-        </button>
+      <div className={styles.header}>
+        <div className="section-heading">
+          <h1>Community conversations</h1>
+          <p>Ask questions, share progress, and keep the learning loop active between lessons and live sessions.</p>
+        </div>
+
+        <div className={`glass-panel ${styles.composeBox}`}>
+          <div className={styles.composeHeader}>
+            <span className="badge"><Plus size={14} /> Start a topic</span>
+            <span className={styles.helperText}>{user ? 'Signed in and ready to post' : 'Sign in to start a discussion'}</span>
+          </div>
+          <div className={styles.composeRow}>
+            <input
+              type="text"
+              placeholder="What would you like to discuss?"
+              value={newTitle}
+              onChange={(event) => setNewTitle(event.target.value)}
+            />
+            <button className="btn-primary" onClick={handleCreateDiscussion}>
+              <Send size={16} />
+              Post
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className={styles.list}>
-        {MOCK_DISCUSSIONS.map(disc => (
-          <div key={disc.id} className={`glass-panel ${styles.discussionCard} animate-fade-in`}>
-            <div>
-              <h2 className={styles.title}>{disc.title}</h2>
-              <div className={styles.meta}>
-                <span style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}><User size={14} /> {disc.author}</span>
-                <span style={{display: 'flex', alignItems: 'center', gap: '0.3rem'}}><Clock size={14} /> {disc.time}</span>
-              </div>
+      {message && <div className={styles.message}>{message}</div>}
+
+      {loading ? (
+        <div className="flex-center" style={{ minHeight: '280px' }}>
+          <Loader2 className={styles.loader} size={40} />
+        </div>
+      ) : (
+        <div className={styles.list}>
+          {discussions.length === 0 ? (
+            <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
+              <MessageSquareMore size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }} />
+              <h3>No discussions yet</h3>
+              <p style={{ color: 'var(--color-text-muted)' }}>Be the first learner to open a thread.</p>
             </div>
-            <div className={styles.replies}>
-              <MessageSquare size={16} style={{display: 'inline', marginRight: '0.4rem'}} />
-              {disc.replies} replies
-            </div>
-          </div>
-        ))}
-      </div>
+          ) : (
+            discussions.map((disc) => (
+              <article key={disc.id} className={`glass-panel ${styles.discussionCard} animate-fade-in`}>
+                <div>
+                  <h2 className={styles.title}>{disc.title}</h2>
+                  <div className={styles.meta}>
+                    <span><User size={14} /> {disc.author ? `${disc.author.firstName} ${disc.author.lastName}` : 'Community member'}</span>
+                    <span>{disc.createdAt ? new Date(disc.createdAt).toLocaleDateString() : 'Just now'}</span>
+                  </div>
+                </div>
+                <div className={styles.replies}>
+                  <MessageSquareMore size={16} />
+                  {disc.messages ? disc.messages.length : 0} replies
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

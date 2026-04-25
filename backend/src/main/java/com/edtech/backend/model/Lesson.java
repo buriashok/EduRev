@@ -24,6 +24,9 @@ public class Lesson {
     @JsonIgnore
     private Course course;
 
+    @OneToOne(mappedBy = "lesson", cascade = CascadeType.ALL)
+    private Quiz quiz;
+
     private int orderIndex;
 
     // Getters and Setters
@@ -74,5 +77,18 @@ public class Lesson {
 
     public void setOrderIndex(int orderIndex) {
         this.orderIndex = orderIndex;
+    }
+
+    public Quiz getQuiz() {
+        return quiz;
+    }
+
+    public void setQuiz(Quiz quiz) {
+        this.quiz = quiz;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("quizId")
+    public Long getQuizId() {
+        return quiz != null ? quiz.getId() : null;
     }
 }

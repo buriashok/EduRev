@@ -1,50 +1,150 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add interceptor to include JWT token in requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+const getErrorMessage = (error, fallbackMessage) => {
+  if (typeof error?.response?.data === 'string') {
+    return error.response.data;
   }
-  return config;
-});
+
+  if (error?.response?.data?.message) {
+    return error.response.data.message;
+  }
+
+  return fallbackMessage;
+};
+
+api.interceptors.request.use(
+  (config) => config,
+  (error) => Promise.reject(error),
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const isAuthRoute = originalRequest?.url?.includes('/api/auth/');
+
+    if (error.response?.status === 401 && !originalRequest?._retry && !isAuthRoute) {
+      originalRequest._retry = true;
+
+      try {
+        await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, { withCredentials: true });
+        return api(originalRequest);
+      } catch (refreshError) {
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
 export const authApi = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
-};
-
-export const courseApi = {
-  getAll: () => api.get('/courses'),
-  getById: (id) => api.get(`/courses/${id}`),
-  create: (course) => api.post('/courses', course),
-  getRecommendations: () => api.get('/courses/recommendations'),
-};
-
-export const eduApi = {
-  getRequests: () => api.get('/edu/requests'),
-  createRequest: (request) => api.post('/edu/requests', request),
-  getCertificates: () => api.get('/edu/certificates'),
-  generateCertificate: (courseId) => api.post(`/edu/certificates/generate/${courseId}`),
-};
-
-export const liveClassApi = {
-  getUpcoming: () => api.get('/live-classes/upcoming'),
-  getById: (id) => api.get(`/live-classes/${id}`),
+  login: (data) => api.post('/api/auth/login', data),
+  verifyOtpLogin: (data) => api.post('/api/auth/login/verify-otp', data),
+  register: (data) => api.post('/api/auth/register', data),
+  verifyEmail: (params) => api.get('/api/auth/verify-email', { params }),
+  logout: () => api.post('/api/auth/logout', {}),
+  forgotPassword: (data) => api.post('/api/auth/forgot-password', data),
+  resetPassword: (data) => api.post('/api/auth/reset-password', data),
 };
 
 export const userApi = {
-  getMe: () => api.get('/users/me'),
-  updateProfile: (userData) => api.put('/users/me', userData),
+  getMe: () => api.get('/api/users/me'),
+  getMyCourses: () => api.get('/api/users/me/courses'),
+  updateProfile: (data) => api.put('/api/users/me', data),
+  getSessions: () => api.get('/api/users/me/sessions'),
+  getLoginHistory: () => api.get('/api/users/me/login-history'),
+  revokeSession: (sessionId) => api.delete(`/api/users/me/sessions/${sessionId}`),
+  deactivateAccount: () => api.post('/api/users/me/deactivate'),
+  updatePassword: (data) => api.post('/api/users/me/password', data),
+  exportData: () => api.get('/api/users/me/export'),
+  uploadAvatar: async (file) => {
+    const profileImage = await fileToDataUrl(file);
+    return api.put('/api/users/me', { profileImage });
+  },
 };
 
+export const adminApi = {
+  getUsers: () => api.get('/api/users/admin/users'),
+  updateUser: (userId, data) => api.patch(`/api/users/admin/users/${userId}`, data),
+  forceLogout: (userId) => api.post(`/api/users/admin/users/${userId}/force-logout`),
+  impersonate: (userId) => api.post(`/api/users/admin/users/${userId}/impersonate`),
+  getAuditLogs: () => api.get('/api/users/admin/audit-logs'),
+  importUsers: (csvContent) => api.post('/api/users/admin/import', { csvContent }),
+  deleteUser: (userId) => api.delete(`/api/users/admin/users/${userId}`),
+};
+
+export const quizApi = {
+  getByLesson: (lessonId) => api.get(`/quizzes/lesson/${lessonId}`),
+  submit: (quizId, answers) => api.post(`/quizzes/${quizId}/submit`, answers),
+  getById: (id) => api.get(`/api/quizzes/${id}`),
+};
+
+export const analyticsApi = {
+  getAdmin: () => api.get('/api/analytics/admin'),
+  getInstructor: () => api.get('/api/analytics/instructor'),
+};
+
+export const courseApi = {
+  getAll: () => api.get('/api/courses'),
+  getById: (id) => api.get(`/api/courses/${id}`),
+  create: (data) => api.post('/api/courses', data),
+  getRecommendations: () => api.get('/api/courses/recommendations'),
+};
+
+export const liveClassApi = {
+  getUpcoming: () => api.get('/api/live-classes/upcoming'),
+  join: (id) => api.post(`/api/live-classes/${id}/join`),
+};
+
+export const discussionApi = {
+  getAll: () => api.get('/api/discussions'),
+  getByCourse: (courseId) => api.get(`/api/discussions/course/${courseId}`),
+  create: (data) => api.post('/api/discussions', data),
+  getMessages: (id) => api.get(`/api/discussions/${id}/messages`),
+  postMessage: (id, data) => api.post(`/api/discussions/${id}/messages`, data),
+};
+
+
+export const certificateApi = {
+  getMyCertificates: () => api.get('/certificates/my'),
+  getById: (id) => api.get(`/certificates/${id}`),
+};
+
+export const eduApi = {
+  getRequests: () => api.get('/api/edu-revolution/requests'),
+  getCertificates: () => api.get('/api/edu-revolution/certificates'),
+  submitRequest: (data) => api.post('/api/edu-revolution/requests', data),
+};
+
+export const progressApi = {
+  get: (courseId) => api.get(`/api/progress/${courseId}`),
+  completeLesson: (courseId, lessonId) => api.post(`/api/progress/${courseId}/lessons/${lessonId}/complete`),
+};
+
+export const paymentApi = {
+  createIntent: (courseId) => api.post(`/api/payments/create-intent/${courseId}`),
+  confirm: (courseId, paymentIntentId) => api.post(`/api/payments/confirm/${courseId}`, { paymentIntentId }),
+};
+
+export { getErrorMessage };
 export default api;

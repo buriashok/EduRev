@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Award, Users, Plus, QrCode } from 'lucide-react';
 import { eduApi } from '../../services/api';
 import styles from './EduDashboard.module.css';
@@ -6,8 +6,6 @@ import styles from './EduDashboard.module.css';
 const EduDashboard = () => {
   const [requests, setRequests] = useState([]);
   const [certificates, setCertificates] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -19,8 +17,6 @@ const EduDashboard = () => {
         setCertificates(certRes.data);
       } catch (error) {
         console.error('Failed to fetch Edu data:', error);
-      } finally {
-        setLoading(false);
       }
     };
     fetchData();

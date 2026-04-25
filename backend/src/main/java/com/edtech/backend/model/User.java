@@ -1,7 +1,10 @@
 package com.edtech.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -15,6 +18,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(nullable = false)
@@ -39,8 +43,39 @@ public class User {
     @Column(name = "profile_image")
     private String profileImage;
 
+    @Column(name = "google_id")
+    @JsonIgnore
+    private String googleId;
+
+    @Column(name = "is_email_verified", nullable = false)
+    private Boolean isEmailVerified = true;
+
+    @Column(name = "is_password_set", nullable = false)
+    private Boolean isPasswordSet = true;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+    @Column(name = "is_two_factor_enabled")
+    private Boolean isTwoFactorEnabled = false;
+
+    @Column(name = "two_factor_method")
+    private String twoFactorMethod = "EMAIL";
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @ManyToMany
+    @JsonIgnore
+    @JoinTable(
+        name = "enrollments",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id")
+    )
+    private List<Course> enrolledCourses = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -129,11 +164,75 @@ public class User {
         this.profileImage = profileImage;
     }
 
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
+    }
+
+    public Boolean isEmailVerified() {
+        return isEmailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.isEmailVerified = emailVerified;
+    }
+
+    public Boolean isPasswordSet() {
+        return isPasswordSet;
+    }
+
+    public void setPasswordSet(Boolean passwordSet) {
+        this.isPasswordSet = passwordSet;
+    }
+
+    public Boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        this.isActive = active;
+    }
+
+    public Boolean isTwoFactorEnabled() {
+        return isTwoFactorEnabled;
+    }
+
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        isTwoFactorEnabled = twoFactorEnabled;
+    }
+
+    public String getTwoFactorMethod() {
+        return twoFactorMethod;
+    }
+
+    public void setTwoFactorMethod(String twoFactorMethod) {
+        this.twoFactorMethod = twoFactorMethod;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<Course> getEnrolledCourses() {
+        return enrolledCourses;
+    }
+
+    public void setEnrolledCourses(List<Course> enrolledCourses) {
+        this.enrolledCourses = enrolledCourses;
     }
 }

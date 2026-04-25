@@ -1,28 +1,125 @@
-import React, { useState } from 'react';
-import { CreditCard, ShieldCheck, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CreditCard, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
+import { paymentApi, getErrorMessage } from '../../services/api';
 import styles from './Checkout.module.css';
 
-const Checkout = () => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-  const handlePayment = (e) => {
-    e.preventDefault();
+const CheckoutForm = ({ course }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+
+  useEffect(() => {
+    if (!course) return;
+
+    const createIntent = async () => {
+      try {
+        const response = await paymentApi.createIntent(course.id);
+        setClientSecret(response.data.clientSecret);
+      } catch (error) {
+        setErrorMessage(getErrorMessage(error, 'Failed to initialize payment.'));
+      }
+    };
+
+    createIntent();
+  }, [course]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!stripe || !elements || !clientSecret) return;
+
     setIsProcessing(true);
-    setTimeout(() => {
+    setErrorMessage('');
+
+    const cardElement = elements.getElement(CardElement);
+
+    if (clientSecret.startsWith('mock_secret')) {
+      // Mock success for testing without Stripe
+      console.log('MOCK MODE: Simulating payment success...');
+      try {
+        await paymentApi.confirm(course.id, 'mock_pi_' + Date.now());
+        navigate('/dashboard', { state: { message: 'Enrollment successful (MOCK)!' } });
+      } catch (confirmError) {
+        setErrorMessage(getErrorMessage(confirmError, 'Enrollment failed.'));
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
+      },
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
       setIsProcessing(false);
-      setIsSuccess(true);
-    }, 2000);
+    } else if (paymentIntent.status === 'succeeded') {
+      try {
+        await paymentApi.confirm(course.id, paymentIntent.id);
+        navigate('/dashboard', { state: { message: 'Enrollment successful!' } });
+      } catch (confirmError) {
+        setErrorMessage(getErrorMessage(confirmError, 'Payment succeeded but enrollment failed. Contact support.'));
+        setIsProcessing(false);
+      }
+    }
   };
 
-  if (isSuccess) {
+  return (
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.cardInputWrapper}>
+        <div className={styles.inputLabel}>
+          <CreditCard size={18} />
+          <span>Card Details</span>
+        </div>
+        <div className={styles.stripeElement}>
+          <CardElement options={{
+            style: {
+              base: {
+                fontSize: '16px',
+                color: '#ffffff',
+                '::placeholder': { color: '#aab7c4' },
+              },
+              invalid: { color: '#fa755a' },
+            },
+          }} />
+        </div>
+      </div>
+
+      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+
+      <button type="submit" className="btn-primary" disabled={!stripe || isProcessing || !clientSecret}>
+        {isProcessing ? <Loader2 className="animate-spin" size={20} /> : `Pay $${course.price.toFixed(2)}`}
+      </button>
+
+      <div className={styles.secureBadge}>
+        <ShieldCheck size={14} /> 
+        Payments secured by Stripe
+      </div>
+    </form>
+  );
+};
+
+const Checkout = () => {
+  const location = useLocation();
+  const course = location.state?.course;
+
+  if (!course) {
     return (
       <div className={styles.checkoutPage}>
-        <div className={`glass-panel ${styles.checkoutCard} animate-fade-in`} style={{textAlign: 'center'}}>
-          <ShieldCheck size={64} style={{color: '#10b981', margin: '0 auto'}} />
-          <h1 className={styles.title}>Payment Successful!</h1>
-          <p style={{color: 'var(--color-text-muted)'}}>Your enrollment is now active. You can start the course immediately.</p>
-          <button className="btn-primary" onClick={() => window.history.back()}>Back to Courses</button>
+        <div className={`glass-panel ${styles.checkoutCard}`}>
+          <h2>No course selected</h2>
+          <p>Please select a course to enroll.</p>
+          <button className="btn-primary" onClick={() => window.history.back()}>Back</button>
         </div>
       </div>
     );
@@ -31,45 +128,33 @@ const Checkout = () => {
   return (
     <div className={styles.checkoutPage}>
       <div className={`glass-panel ${styles.checkoutCard} animate-fade-in`}>
-        <h1 className={styles.title}>Secure Checkout</h1>
+        <header className={styles.header}>
+          <button className={styles.backBtn} onClick={() => window.history.back()}>
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className={styles.title}>Secure Checkout</h1>
+        </header>
         
+        <div className={styles.courseSummary}>
+          <div className={styles.badge}>{course.difficulty}</div>
+          <h3>{course.title}</h3>
+          <p>{course.description}</p>
+        </div>
+
         <div className={styles.orderSummary}>
           <div className={styles.item}>
-            <span>Full Stack Java Development</span>
-            <span>$49.99</span>
-          </div>
-          <div className={styles.item}>
-            <span>Tax</span>
-            <span>$0.00</span>
+            <span>Course Price</span>
+            <span>${course.price.toFixed(2)}</span>
           </div>
           <div className={styles.total}>
             <span>Total</span>
-            <span>$49.99</span>
+            <span>${course.price.toFixed(2)}</span>
           </div>
         </div>
 
-        <form onSubmit={handlePayment} style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-          <div style={{background: 'rgba(255, 255, 255, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text-muted)'}}>
-              <CreditCard size={20} />
-              <span>Card Details (Mock Input)</span>
-            </div>
-            <input 
-              type="text" 
-              placeholder="4242 4242 4242 4242" 
-              style={{background: 'none', border: 'none', color: 'white', width: '100%', marginTop: '0.5rem', outline: 'none', fontSize: '1rem'}} 
-              disabled
-            />
-          </div>
-
-          <button type="submit" className="btn-primary" disabled={isProcessing} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1rem'}}>
-            {isProcessing ? <Loader2 className="animate-spin" size={20} /> : 'Complete Purchase'}
-          </button>
-          
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>
-            <ShieldCheck size={14} /> Payments secured by Stripe
-          </div>
-        </form>
+        <Elements stripe={stripePromise}>
+          <CheckoutForm course={course} />
+        </Elements>
       </div>
     </div>
   );

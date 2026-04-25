@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, BarChart3, Clock3, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Clock, BarChart, ChevronRight } from 'lucide-react';
-import { courseApi } from '../../services/api';
+import { courseApi, getErrorMessage } from '../../services/api';
 import styles from './Courses.module.css';
 
 const Courses = () => {
@@ -9,6 +9,7 @@ const Courses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [difficulty, setDifficulty] = useState('ALL');
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -16,47 +17,46 @@ const Courses = () => {
         const response = await courseApi.getAll();
         setCourses(response.data);
       } catch (error) {
-        console.error('Failed to fetch courses:', error);
+        setMessage(getErrorMessage(error, 'Failed to load courses.'));
       } finally {
         setLoading(false);
       }
     };
+
     fetchCourses();
   }, []);
 
-  const filteredCourses = courses.filter(course => {
-    return (difficulty === 'ALL' || course.difficulty === difficulty) &&
-           course.title.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const filteredCourses = useMemo(
+    () =>
+      courses.filter((course) => {
+        const matchesDifficulty = difficulty === 'ALL' || course.difficulty === difficulty;
+        const matchesSearch = `${course.title} ${course.description}`.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesDifficulty && matchesSearch;
+      }),
+    [courses, difficulty, searchTerm],
+  );
 
   return (
     <div className={`container ${styles.coursesPage}`}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>All Courses</h1>
-        <div style={{position: 'relative', width: '300px'}}>
-          <Search style={{position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)'}} size={18} />
-          <input 
-            type="text" 
-            className={styles.select} 
-            style={{paddingLeft: '40px', width: '100%'}}
-            placeholder="Search courses..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className={styles.hero}>
+        <div className="section-heading">
+          <h1>Explore compact, practical learning tracks</h1>
+          <p>Discover courses designed for real outcomes: concise lessons, clear difficulty tags, and a faster path to progress.</p>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="flex-center" style={{height: '300px'}}>
-          <div className="spinner"></div>
-        </div>
-      ) : (
-        <>
-          <div className={`glass-panel ${styles.filterBar}`}>
-        <div className={styles.filterGroup}>
-          <label style={{fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>Difficulty</label>
-          <select className={styles.select} value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-            <option value="ALL">All Levels</option>
+        <div className={styles.controls}>
+          <label className={styles.searchBox}>
+            <Search size={18} />
+            <input
+              type="text"
+              placeholder="Search courses, topics, or outcomes"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </label>
+
+          <select className={styles.select} value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>
+            <option value="ALL">All levels</option>
             <option value="BEGINNER">Beginner</option>
             <option value="INTERMEDIATE">Intermediate</option>
             <option value="ADVANCED">Advanced</option>
@@ -64,37 +64,42 @@ const Courses = () => {
         </div>
       </div>
 
-      <div className={styles.grid}>
-        {filteredCourses.map(course => (
-          <div key={course.id} className={`glass-panel ${styles.courseCard} animate-fade-in`}>
-            <div className={styles.thumbnail}>
-              <h3>{course.title.split(' ')[0]}</h3>
-            </div>
-            <div className={styles.content}>
-              <h3 className={styles.courseTitle}>{course.title}</h3>
-              <p style={{color: 'var(--color-text-muted)', fontSize: '0.9rem'}}>{course.description}</p>
-              
-              <div className={styles.meta}>
-                <span style={{display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                  <Clock size={16} /> {course.duration}
-                </span>
-                <span style={{display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                  <BarChart size={16} /> {course.difficulty}
-                </span>
-              </div>
+      {loading ? (
+        <div className="flex-center" style={{ minHeight: '280px' }}>
+          <div className="spinner" />
+        </div>
+      ) : (
+        <>
+          {message && <div className={styles.message}>{message}</div>}
 
-              <div className={styles.footer} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem'}}>
-                <span className={styles.price}>${course.price}</span>
-                <Link to={`/checkout`} className="btn-primary" style={{padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
-                  Enroll Now <ChevronRight size={16} />
-                </Link>
-              </div>
-            </div>
+          <div className={styles.grid}>
+            {filteredCourses.map((course) => (
+              <article key={course.id} className={`glass-panel ${styles.courseCard} animate-fade-in`}>
+                <div className={styles.thumbnail}>
+                  <span className="badge">{course.difficulty}</span>
+                  <h2>{course.title}</h2>
+                  <p>{course.description}</p>
+                </div>
+
+                <div className={styles.meta}>
+                  <span><Clock3 size={16} /> {course.duration}</span>
+                  <span><BarChart3 size={16} /> {course.instructor ? `${course.instructor.firstName} ${course.instructor.lastName}` : 'EduRev mentor'}</span>
+                </div>
+
+                <div className={styles.footer}>
+                  <strong>${Number(course.price || 0).toFixed(2)}</strong>
+                  <Link to="/checkout" state={{ course }} className="btn-primary">
+                    Enroll
+                    <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </article>
+            ))}
           </div>
-        ))}
-      </div>
-    </>
-  )}
+
+          {!filteredCourses.length && <div className={styles.emptyState}>No courses matched your current search.</div>}
+        </>
+      )}
     </div>
   );
 };

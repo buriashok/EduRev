@@ -1,0 +1,9 @@
+- [x] Start Backend and Frontend
+- [x] Register Instructor & Verify OTP
+- [x] Create Sample Course
+- [x] Register Student & Verify OTP
+- [x] Test Stripe Checkout
+- [ ] Implement Quiz Backend (Controller & Model)
+- [ ] Implement Quiz Frontend (Interactive UI)
+- [ ] Integrate Quiz with Course Player
+- [ ] Add Sample Quiz Data
