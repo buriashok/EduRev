@@ -77,16 +77,16 @@ const Home = () => {
     <div className={styles.home}>
       <section className={styles.hero}>
         <div className={`container ${styles.heroLayout}`}>
-          <div className={styles.heroCopy}>
-            <span className="badge"><BadgeCheck size={14} /> Trusted by focused learners and instructors</span>
-            <h1>{user ? `Welcome back, ${user.firstName}!` : 'Build career-ready skills with a calmer, smarter learning platform.'}</h1>
-            <p>
+          <div className={`${styles.heroCopy} animate-fade-in`}>
+            <span className="badge shimmer"><BadgeCheck size={14} /> Trusted by focused learners and instructors</span>
+            <h1 className="animate-up">{user ? `Welcome back, ${user.firstName}!` : 'Build career-ready skills with a calmer, smarter learning platform.'}</h1>
+            <p className="animate-up stagger-1">
               {user 
                 ? 'Ready to continue your journey? Pick up where you left off and hit your weekly learning targets.'
                 : 'EduRev combines practical courses, live coaching, guided community support, and clean progress tracking into one compact experience.'}
             </p>
 
-            <div className={styles.heroActions}>
+            <div className={`${styles.heroActions} animate-up stagger-2`}>
               {user ? (
                 <Link to="/dashboard" className="btn-primary">
                   Go to My Dashboard
@@ -104,7 +104,7 @@ const Home = () => {
               </Link>
             </div>
 
-            <div className={styles.statRow}>
+            <div className={`${styles.statRow} animate-up stagger-3`}>
               {quickStats.map((item) => (
                 <div key={item.label} className={styles.statCard}>
                   <strong>{item.value}</strong>
@@ -114,8 +114,8 @@ const Home = () => {
             </div>
           </div>
 
-          <div className={styles.heroVisual}>
-            <div className={styles.heroPanel}>
+          <div className={`${styles.heroVisual} animate-scale-in stagger-2`}>
+            <div className={`${styles.heroPanel} hover-lift`}>
               <div className={styles.heroPanelTop}>
                 <span className="badge"><GraduationCap size={14} /> Learning sprint</span>
                 <span className={styles.panelTime}>Updated weekly</span>
@@ -127,7 +127,7 @@ const Home = () => {
                   <strong>78%</strong>
                 </div>
                 <div className={styles.progressBar}>
-                  <div style={{ width: '78%' }} />
+                  <div className="animate-shimmer" style={{ width: '78%' }} />
                 </div>
               </div>
               <div className={styles.heroChecklist}>
@@ -139,12 +139,12 @@ const Home = () => {
           </div>
         </div>
 
-        <div className={`container ${styles.logoStrip}`}>
+        <div className={`container ${styles.logoStrip} animate-fade-in stagger-4`}>
           <Marquee items={partnerLogos} />
         </div>
       </section>
 
-      <section className={styles.valueSection}>
+      <section className={`${styles.valueSection} animate-fade-in`}>
         <div className="container">
           <div className="section-heading">
             <h2>Designed to feel lighter, clearer, and easier to stick with</h2>
@@ -154,10 +154,10 @@ const Home = () => {
           </div>
 
           <div className={styles.valueGrid}>
-            {experienceCards.map((card) => {
+            {experienceCards.map((card, idx) => {
               const Icon = card.icon;
               return (
-                <article key={card.title} className={`glass-panel ${styles.valueCard}`}>
+                <article key={card.title} className={`glass-panel ${styles.valueCard} animate-up hover-lift stagger-${idx + 1}`}>
                   <div className={styles.valueIcon}>
                     <Icon size={22} />
                   </div>
@@ -170,7 +170,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section className={styles.featuredSection}>
+      <section className={`${styles.featuredSection} animate-fade-in`}>
         <div className="container">
           <div className={styles.featuredHeader}>
             <div className="section-heading">
@@ -181,8 +181,8 @@ const Home = () => {
           </div>
 
           <div className={styles.courseGrid}>
-            {featuredCourses.map((course) => (
-              <article key={course.title} className={styles.courseCard}>
+            {featuredCourses.map((course, idx) => (
+              <article key={course.title} className={`${styles.courseCard} animate-up hover-lift stagger-${idx + 1}`}>
                 <span className="badge">{course.category}</span>
                 <h3>{course.title}</h3>
                 <p>{course.description}</p>

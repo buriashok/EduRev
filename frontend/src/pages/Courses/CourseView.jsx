@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Circle, PlayCircle, BookOpen, ArrowLeft, Loader2, Award } from 'lucide-react';
 import { courseApi, progressApi, certificateApi, getErrorMessage } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import styles from './CourseView.module.css';
 
 const CourseView = () => {
+  const { user } = useAuth();
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
@@ -135,12 +137,45 @@ const CourseView = () => {
         <section className={styles.content}>
           {currentLesson ? (
             <div className={styles.lessonContent}>
-              <div className={styles.videoPlaceholder}>
-                <div className={styles.videoOverlay}>
-                  <PlayCircle size={64} />
-                  <p>Video content for "{currentLesson.title}" would play here.</p>
-                  {currentLesson.videoUrl && <span className={styles.videoUrl}>{currentLesson.videoUrl}</span>}
-                </div>
+              <div className={styles.videoContainer}>
+                {(!user && !currentLesson.preview) ? (
+                  <div className={styles.lockedOverlay}>
+                    <div className={`glass-panel ${styles.lockedCard}`}>
+                      <PlayCircle size={48} />
+                      <h2>Premium Content</h2>
+                      <p>This lesson is restricted to enrolled students. Sign in to start learning!</p>
+                      <button className="btn-primary" onClick={() => navigate('/login')}>Sign in to Join</button>
+                    </div>
+                  </div>
+                ) : currentLesson.videoUrl ? (
+                  getYoutubeEmbedUrl(currentLesson.videoUrl) ? (
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={getYoutubeEmbedUrl(currentLesson.videoUrl)}
+                      title={currentLesson.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className={styles.videoPlayer}
+                    ></iframe>
+                  ) : (
+                    <video 
+                      controls 
+                      src={currentLesson.videoUrl} 
+                      className={styles.videoPlayer}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  )
+                ) : (
+                  <div className={styles.videoPlaceholder}>
+                    <div className={styles.videoOverlay}>
+                      <PlayCircle size={64} />
+                      <p>Video content for "{currentLesson.title}" would play here.</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className={styles.textDetails}>

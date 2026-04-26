@@ -19,6 +19,8 @@ public class Lesson {
 
     private String videoUrl;
 
+    private boolean isPreview = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
     @JsonIgnore
@@ -90,5 +92,13 @@ public class Lesson {
     @com.fasterxml.jackson.annotation.JsonProperty("quizId")
     public Long getQuizId() {
         return quiz != null ? quiz.getId() : null;
+    }
+
+    public boolean isPreview() {
+        return isPreview;
+    }
+
+    public void setPreview(boolean preview) {
+        isPreview = preview;
     }
 }

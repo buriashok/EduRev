@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, BarChart3, Clock3, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { courseApi, getErrorMessage } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import styles from './Courses.module.css';
 
 const Courses = () => {
+  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [difficulty, setDifficulty] = useState('ALL');
@@ -74,7 +76,7 @@ const Courses = () => {
 
           <div className={styles.grid}>
             {filteredCourses.map((course) => (
-              <article key={course.id} className={`glass-panel ${styles.courseCard} animate-fade-in`}>
+              <article key={course.id} className={`glass-panel ${styles.courseCard} animate-fade-in hover-lift`}>
                 <div className={styles.thumbnail}>
                   <span className="badge">{course.difficulty}</span>
                   <h2>{course.title}</h2>
@@ -88,10 +90,21 @@ const Courses = () => {
 
                 <div className={styles.footer}>
                   <strong>₹{Number(course.price || 0).toLocaleString('en-IN')}</strong>
-                  <Link to="/checkout" state={{ course }} className="btn-primary">
-                    Enroll
-                    <ArrowRight size={16} />
-                  </Link>
+                  {(!user || user.role === 'STUDENT') && (
+                    <Link to="/checkout" state={{ course }} className="btn-primary">
+                      Enroll
+                      <ArrowRight size={16} />
+                    </Link>
+                  )}
+                  {user?.role === 'ADMIN' && (
+                    <Link to={`/learn/${course.id}`} className="btn-primary">
+                      Access (Admin)
+                      <ArrowRight size={16} />
+                    </Link>
+                  )}
+                  {user?.role === 'INSTRUCTOR' && (
+                    <span className={styles.instructorTag}>Owner View</span>
+                  )}
                 </div>
               </article>
             ))}

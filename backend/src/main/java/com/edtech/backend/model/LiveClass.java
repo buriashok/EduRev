@@ -33,7 +33,28 @@ public class LiveClass {
 
     private String meetingLink; // Agora/Zoom/WebRTC link
 
+    @Column(nullable = false)
+    private boolean isCompleted = false;
+
+    private int maxCapacity = 50;
+
     // Getters and Setters
+
+    public boolean isCompleted() {
+        return isCompleted;
+    }
+
+    public void setCompleted(boolean completed) {
+        isCompleted = completed;
+    }
+
+    public int getMaxCapacity() {
+        return maxCapacity;
+    }
+
+    public void setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+    }
 
     public Long getId() {
         return id;

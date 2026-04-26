@@ -10,4 +10,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @org.springframework.data.jpa.repository.Query("SELECT SUM(p.amount) FROM Payment p")
     java.math.BigDecimal sumTotalRevenue();
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(p.amount) FROM Payment p JOIN p.course c WHERE c.instructor.id = :instructorId")
+    java.math.BigDecimal sumRevenueByInstructor(Long instructorId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(p) FROM Payment p JOIN p.course c WHERE c.instructor.id = :instructorId")
+    long countEnrollmentsByInstructor(Long instructorId);
 }

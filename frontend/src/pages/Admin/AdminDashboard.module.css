@@ -226,3 +226,75 @@
     overflow-x: auto;
   }
 }
+
+.tabNav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+}
+
+.tabNav button {
+  background: none;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.tabNav button:hover {
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+}
+
+.tabNav button.activeTab {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.settingsForm {
+  max-width: 600px;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.formGroup input[type="text"],
+.formGroup select {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: #fff;
+}
+
+.colorInputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.colorInputWrapper input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}

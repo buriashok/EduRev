@@ -94,6 +94,8 @@ export const adminApi = {
   getCourses: () => api.get('/api/courses'),
   deleteCourse: (courseId) => api.delete(`/api/courses/${courseId}`),
   updateCourseStatus: (courseId, status) => api.patch(`/api/courses/${courseId}/status`, { status }),
+  getSettings: () => api.get('/api/settings'),
+  updateSettings: (settings) => api.post('/api/admin/settings', settings),
 };
 
 export const quizApi = {
@@ -109,6 +111,13 @@ export const analyticsApi = {
   getInstructor: () => api.get('/api/analytics/instructor'),
 };
 
+export const instructorApi = {
+  getMyCourses: () => api.get('/api/instructor/courses'),
+  getCourseStudents: (courseId) => api.get(`/api/instructor/courses/${courseId}/students`),
+  getEarnings: () => api.get('/api/instructor/earnings'),
+  getAnalytics: () => api.get('/api/instructor/analytics'),
+};
+
 export const courseApi = {
   getAll: () => api.get('/api/courses'),
   getById: (id) => api.get(`/api/courses/${id}`),
@@ -119,6 +128,7 @@ export const courseApi = {
 export const liveClassApi = {
   getUpcoming: () => api.get('/api/live-classes/upcoming'),
   join: (id) => api.post(`/api/live-classes/${id}/join`),
+  create: (data) => api.post('/api/live-classes', data),
 };
 
 export const discussionApi = {
