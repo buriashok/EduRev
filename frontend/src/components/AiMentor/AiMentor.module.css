@@ -1,0 +1,239 @@
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 32px rgba(79, 70, 229, 0.5);
+}
+
+.fabTooltip {
+  position: absolute;
+  right: 80px;
+  background: #1a202c;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.fab:hover .fabTooltip {
+  opacity: 1;
+}
+
+.chatWindow {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 400px;
+  height: 600px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.chatWindow.minimized {
+  height: 64px;
+}
+
+.header {
+  padding: 1rem 1.5rem;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.botIcon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.headerActions button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.7;
+}
+
+.headerActions button:hover {
+  opacity: 1;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  display: flex;
+  gap: 0.75rem;
+  max-width: 85%;
+}
+
+.botMsg {
+  align-self: flex-start;
+}
+
+.userMsg {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.msgIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.botMsg .msgIcon {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.userMsg .msgIcon {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.msgText {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.botMsg .msgText {
+  background: #fff;
+  border-bottom-left-radius: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.userMsg .msgText {
+  background: var(--color-primary);
+  color: #fff;
+  border-bottom-right-radius: 0;
+}
+
+.inputArea {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: 0.75rem;
+  background: #fff;
+}
+
+.inputArea input {
+  flex: 1;
+  border: none;
+  padding: 0.5rem;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.inputArea button {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.inputArea button:hover {
+  transform: scale(1.1);
+}
+
+.typing {
+  display: flex;
+  gap: 4px;
+  padding: 0.5rem;
+}
+
+.typing span {
+  width: 6px;
+  height: 6px;
+  background: #a0aec0;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typing span:nth-child(1) { animation-delay: -0.32s; }
+.typing span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}
+
+@media (max-width: 480px) {
+  .chatWindow {
+    width: calc(100% - 2rem);
+    right: 1rem;
+    left: 1rem;
+    bottom: 1rem;
+  }
+}

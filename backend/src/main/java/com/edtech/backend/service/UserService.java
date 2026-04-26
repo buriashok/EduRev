@@ -9,6 +9,7 @@ import com.edtech.backend.repository.AuditLogRepository;
 import com.edtech.backend.repository.UserRepository;
 import com.edtech.backend.repository.SessionRepository;
 import com.edtech.backend.repository.OTPRecordRepository;
+import com.edtech.backend.model.NotificationType;
 import com.edtech.backend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,6 +49,9 @@ public class UserService {
     @Autowired
     private OTPRecordRepository otpRecordRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
@@ -77,7 +81,11 @@ public class UserService {
             user.setTwoFactorMethod(userDetails.getTwoFactorMethod().trim().toUpperCase());
         }
 
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        notificationService.createNotification(saved, "Profile Updated", 
+            "Your profile information has been successfully updated.", 
+            NotificationType.INFO, "/settings");
+        return saved;
     }
 
     public List<Session> getActiveSessions(Long id) {
@@ -107,7 +115,11 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setPasswordSet(true);
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        notificationService.createNotification(saved, "Password Changed", 
+            "Your account password was recently changed. If this wasn't you, please secure your account.", 
+            NotificationType.SECURITY, "/settings");
+        return saved;
     }
 
     public Map<String, Object> exportUserData(Long id) {
@@ -156,6 +168,11 @@ public class UserService {
         User savedUser = userRepository.save(user);
         auditLogService.log(adminUserId, "ADMIN_UPDATE_USER", String.valueOf(targetUserId),
                 "Role=" + savedUser.getRole() + ", Active=" + savedUser.isActive());
+        
+        notificationService.createNotification(savedUser, "Account Status Updated", 
+            "An administrator has updated your account role or status.", 
+            NotificationType.WARNING, "/dashboard");
+
         return savedUser;
     }
 
@@ -271,6 +288,12 @@ public class UserService {
         userRepository.save(user);
         sessionRepository.deleteByUser(user);
         auditLogService.log(userId, "SELF_DEACTIVATE", String.valueOf(userId), "User deactivated own account");
+        
+        // This notification might not be seen immediately since session is deleted, 
+        // but it will be in their history if they reactivate.
+        notificationService.createNotification(user, "Account Deactivated", 
+            "Your account has been deactivated per your request.", 
+            NotificationType.WARNING, null);
     }
 
     @Transactional

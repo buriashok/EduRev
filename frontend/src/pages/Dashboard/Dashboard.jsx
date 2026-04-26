@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, BookOpen, Clock3, TrendingUp, Users, ArrowRight, PlayCircle, Plus } from 'lucide-react';
+import { Activity, BookOpen, Clock3, TrendingUp, Users, ArrowRight, PlayCircle, Plus, GraduationCap } from 'lucide-react';
 import Recommendations from '../../components/Recommendations/Recommendations';
 import { analyticsApi, userApi, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -40,6 +40,17 @@ const Dashboard = () => {
           });
           return;
         }
+
+        if (user?.role === 'STUDENT') {
+          const response = await analyticsApi.getUser();
+          setStats({
+            coursesEnrolled: response.data.coursesEnrolled,
+            certificatesEarned: response.data.certificatesEarned,
+            averageScore: `${response.data.averageScore}%`,
+            activeTime: '0h' // Placeholder for future time tracking
+          });
+          return;
+        }
       } catch (error) {
         setMessage(getErrorMessage(error, 'Showing default dashboard insights for now.'));
       }
@@ -63,23 +74,41 @@ const Dashboard = () => {
     if (user) fetchEnrolled();
   }, [user]);
 
-  const cards = useMemo(
-    () => [
-      { label: 'Revenue', value: `$${Number(stats.totalRevenue).toLocaleString()}`, icon: TrendingUp },
-      { label: 'Learners', value: Number(stats.activeStudents).toLocaleString(), icon: Users },
-      { label: 'Courses', value: Number(stats.totalCourses).toLocaleString(), icon: BookOpen },
-      { label: 'Completion', value: `${stats.completionRate}`, icon: Activity },
-    ],
-    [stats],
-  );
+  const cards = useMemo(() => {
+    if (user?.role === 'ADMIN' || user?.role === 'INSTRUCTOR') {
+      return [
+        { label: 'Revenue', value: `₹${Number(stats.totalRevenue || 0).toLocaleString('en-IN')}`, icon: TrendingUp },
+        { label: 'Learners', value: Number(stats.activeStudents).toLocaleString(), icon: Users },
+        { label: 'Courses', value: Number(stats.totalCourses).toLocaleString(), icon: BookOpen },
+        { label: 'Completion', value: `${stats.completionRate}`, icon: Activity },
+      ];
+    }
+    return [
+      { label: 'Enrolled', value: stats.coursesEnrolled || 0, icon: BookOpen },
+      { label: 'Certificates', value: stats.certificatesEarned || 0, icon: GraduationCap },
+      { label: 'Avg. Score', value: stats.averageScore || '0%', icon: TrendingUp },
+      { label: 'Study Time', value: stats.activeTime || '0h', icon: Clock3 },
+    ];
+  }, [stats, user?.role]);
 
   return (
     <div className={`container ${styles.dashboardPage}`}>
       <div className="section-heading">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <div>
-            <h1>{user ? `Welcome back, ${user.firstName}` : 'Learning dashboard'}</h1>
-            <p>Track momentum, explore recommendations, and keep the next important action visible.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+             <div className={styles.levelBadge}>
+                <span className={styles.levelLabel}>Level</span>
+                <span className={styles.levelValue}>{user?.level || 1}</span>
+             </div>
+             <div>
+                <h1>{user ? `Welcome back, ${user.firstName}` : 'Learning dashboard'}</h1>
+                <div className={styles.xpWrapper}>
+                   <div className={styles.xpBar}>
+                      <div className={styles.xpFill} style={{ width: `${((user?.xp % 1000) / 1000) * 100}%` }} />
+                   </div>
+                   <span className={styles.xpText}>{user?.xp % 1000} / 1000 XP to next level</span>
+                </div>
+             </div>
           </div>
           {user?.role === 'INSTRUCTOR' && (
             <button 

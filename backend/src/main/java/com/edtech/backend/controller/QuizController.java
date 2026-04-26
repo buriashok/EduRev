@@ -28,6 +28,16 @@ public class QuizController {
     @Autowired
     private CertificateRepository certificateRepository;
 
+    @Autowired
+    private com.edtech.backend.service.NotificationService notificationService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Quiz> getQuizById(@PathVariable Long id) {
+        return quizRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/lesson/{lessonId}")
     public ResponseEntity<Quiz> getQuizByLesson(@PathVariable Long lessonId) {
         return quizRepository.findByLessonId(lessonId)
@@ -66,6 +76,10 @@ public class QuizController {
         // Issue Certificate if passed
         boolean certificateEarned = false;
         if (passed) {
+            // Award XP
+            awardXp(user, 100);
+            userRepository.save(user);
+
             Optional<Certificate> existing = certificateRepository.findByUserAndCourseId(user, quiz.getLesson().getCourse().getId());
             if (existing.isEmpty()) {
                 Certificate cert = new Certificate();
@@ -74,6 +88,14 @@ public class QuizController {
                 cert.setUniqueId("CERT-" + System.currentTimeMillis() + "-" + user.getId());
                 certificateRepository.save(cert);
                 certificateEarned = true;
+                
+                notificationService.createNotification(user, "Certificate Earned!", 
+                    "Congratulations! You've earned a certificate for: " + quiz.getLesson().getCourse().getTitle(), 
+                    NotificationType.SUCCESS, "/profile");
+            } else {
+                notificationService.createNotification(user, "Quiz Passed", 
+                    "You passed the quiz for: " + quiz.getLesson().getTitle() + "!", 
+                    NotificationType.SUCCESS, null);
             }
         }
 
@@ -82,7 +104,18 @@ public class QuizController {
             "total", questions.size(),
             "passed", passed,
             "certificateEarned", certificateEarned,
-            "message", passed ? "Congratulations! You passed and earned a certificate." : "Keep studying and try again!"
+            "xpGained", passed ? 100 : 0,
+            "newTotalXp", user.getXp(),
+            "newLevel", user.getLevel(),
+            "message", passed ? "Congratulations! You passed and earned 100 XP!" : "Keep studying and try again!"
         ));
+    }
+
+    private void awardXp(User user, int amount) {
+        user.setXp(user.getXp() + amount);
+        int newLevel = (int) (user.getXp() / 1000) + 1;
+        if (newLevel > user.getLevel()) {
+            user.setLevel(newLevel);
+        }
     }
 }

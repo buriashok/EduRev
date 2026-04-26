@@ -36,6 +36,9 @@ public class Course {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Lesson> lessons = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    private CourseStatus status = CourseStatus.PENDING;
+
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -115,5 +118,13 @@ public class Course {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public CourseStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CourseStatus status) {
+        this.status = status;
     }
 }

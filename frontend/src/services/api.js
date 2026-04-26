@@ -91,15 +91,20 @@ export const adminApi = {
   getAuditLogs: () => api.get('/api/users/admin/audit-logs'),
   importUsers: (csvContent) => api.post('/api/users/admin/import', { csvContent }),
   deleteUser: (userId) => api.delete(`/api/users/admin/users/${userId}`),
+  getCourses: () => api.get('/api/courses'),
+  deleteCourse: (courseId) => api.delete(`/api/courses/${courseId}`),
+  updateCourseStatus: (courseId, status) => api.patch(`/api/courses/${courseId}/status`, { status }),
 };
 
 export const quizApi = {
-  getByLesson: (lessonId) => api.get(`/quizzes/lesson/${lessonId}`),
-  submit: (quizId, answers) => api.post(`/quizzes/${quizId}/submit`, answers),
+  getByLesson: (lessonId) => api.get(`/api/quizzes/lesson/${lessonId}`),
+  submit: (quizId, answers) => api.post(`/api/quizzes/${quizId}/submit`, answers),
   getById: (id) => api.get(`/api/quizzes/${id}`),
 };
 
 export const analyticsApi = {
+  getPlatform: () => api.get('/api/analytics/platform'),
+  getUser: () => api.get('/api/analytics/user'),
   getAdmin: () => api.get('/api/analytics/admin'),
   getInstructor: () => api.get('/api/analytics/instructor'),
 };
@@ -126,14 +131,23 @@ export const discussionApi = {
 
 
 export const certificateApi = {
-  getMyCertificates: () => api.get('/certificates/my'),
-  getById: (id) => api.get(`/certificates/${id}`),
+  getMyCertificates: () => api.get('/api/certificates/my'),
+  getById: (id) => api.get(`/api/certificates/${id}`),
 };
 
 export const eduApi = {
   getRequests: () => api.get('/api/edu-revolution/requests'),
   getCertificates: () => api.get('/api/edu-revolution/certificates'),
   submitRequest: (data) => api.post('/api/edu-revolution/requests', data),
+};
+
+export const aiApi = {
+  chat: (message, context) => api.post('/api/ai/chat', { message, context }),
+  getHistory: () => api.get('/api/ai/history'),
+};
+
+export const leaderboardApi = {
+  get: () => api.get('/api/leaderboard'),
 };
 
 export const progressApi = {
@@ -144,6 +158,13 @@ export const progressApi = {
 export const paymentApi = {
   createIntent: (courseId) => api.post(`/api/payments/create-intent/${courseId}`),
   confirm: (courseId, paymentIntentId) => api.post(`/api/payments/confirm/${courseId}`, { paymentIntentId }),
+};
+
+export const notificationApi = {
+  getAll: (page = 0) => api.get('/api/notifications', { params: { page } }),
+  getUnreadCount: () => api.get('/api/notifications/unread-count'),
+  markAsRead: (id) => api.patch(`/api/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/api/notifications/read-all'),
 };
 
 export { getErrorMessage };

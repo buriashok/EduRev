@@ -53,6 +53,9 @@ public class AuthService {
     @Autowired
     private LoginAttemptService loginAttemptService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     public void register(RegisterRequest registerRequest) {
         String email = registerRequest.getEmail().trim().toLowerCase();
@@ -124,6 +127,10 @@ public class AuthService {
 
         logAction(user.getId(), "LOGIN", "SUCCESS", ipAddress);
 
+        notificationService.createNotification(user, "New Login Alert", 
+            "A new login was detected for your account from IP: " + ipAddress + " (" + deviceInfo + ").", 
+            NotificationType.SECURITY, null);
+
         return new JwtAuthenticationResponse(accessToken, refreshToken, user.getRole().name());
     }
 
@@ -160,6 +167,12 @@ public class AuthService {
 
         String accessToken = tokenProvider.generateTokenFromUserId(user.getId());
         String refreshToken = createSession(user, ipAddress, deviceInfo, true);
+        
+        logAction(user.getId(), "GOOGLE_LOGIN", "SUCCESS", ipAddress);
+
+        notificationService.createNotification(user, "Social Login Alert", 
+            "You just signed in using Google from IP: " + ipAddress + ".", 
+            NotificationType.SECURITY, null);
 
         return new JwtAuthenticationResponse(accessToken, refreshToken, user.getRole().name());
     }
@@ -233,6 +246,11 @@ public class AuthService {
         String refreshToken = createSession(user, ipAddress, deviceInfo, Boolean.TRUE.equals(request.getRememberMe()));
 
         logAction(user.getId(), "LOGIN", "SUCCESS_AFTER_OTP", ipAddress);
+
+        notificationService.createNotification(user, "Secure Login Success", 
+            "MFA verification successful from IP: " + ipAddress + ".", 
+            NotificationType.SECURITY, null);
+
         return new JwtAuthenticationResponse(accessToken, refreshToken, user.getRole().name());
     }
 
@@ -251,6 +269,10 @@ public class AuthService {
         user.setEmailVerified(true);
         userRepository.save(user);
         logAction(user.getId(), "EMAIL_VERIFIED", "Registration OTP verified", "system");
+
+        notificationService.createNotification(user, "Account Verified", 
+            "Welcome to EduRev! Your email has been successfully verified.", 
+            NotificationType.SUCCESS, "/dashboard");
     }
 
     @Transactional
@@ -295,6 +317,10 @@ public class AuthService {
         otpRecordRepository.delete(record);
         sessionRepository.deleteByUser(user);
         logAction(user.getId(), "PASSWORD_RESET", "Password updated from reset link", "system");
+
+        notificationService.createNotification(user, "Password Changed", 
+            "Your password has been successfully reset. If you did not do this, please contact support immediately.", 
+            NotificationType.SECURITY, "/settings");
     }
 
     @Transactional

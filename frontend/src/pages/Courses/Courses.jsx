@@ -87,7 +87,7 @@ const Courses = () => {
                 </div>
 
                 <div className={styles.footer}>
-                  <strong>${Number(course.price || 0).toFixed(2)}</strong>
+                  <strong>₹{Number(course.price || 0).toLocaleString('en-IN')}</strong>
                   <Link to="/checkout" state={{ course }} className="btn-primary">
                     Enroll
                     <ArrowRight size={16} />

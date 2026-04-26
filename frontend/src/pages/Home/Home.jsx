@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, BookOpen, BrainCircuit, GraduationCap, PlayCircle, Users, Video } from 'lucide-react';
 import Marquee from '../../components/Marquee/Marquee';
 import { useAuth } from '../../context/AuthContext';
+import { analyticsApi } from '../../services/api';
 import styles from './Home.module.css';
 
 const partnerLogos = ['Google', 'Microsoft', 'Adobe', 'AWS', 'Atlassian', 'Notion', 'Shopify', 'Stripe'];
@@ -27,12 +29,6 @@ const featuredCourses = [
   },
 ];
 
-const quickStats = [
-  { value: '30k+', label: 'active learners' },
-  { value: '180+', label: 'guided lessons' },
-  { value: '92%', label: 'completion momentum' },
-];
-
 const experienceCards = [
   {
     icon: BookOpen,
@@ -53,6 +49,29 @@ const experienceCards = [
 
 const Home = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCourses: 0,
+    totalEnrollments: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await analyticsApi.getPlatform();
+        setStats(res.data);
+      } catch (error) {
+        console.error('Failed to fetch platform stats', error);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const quickStats = [
+    { value: `${stats.totalUsers > 1000 ? (stats.totalUsers/1000).toFixed(1) + 'k' : stats.totalUsers}+`, label: 'active learners' },
+    { value: `${stats.totalCourses}+`, label: 'curated tracks' },
+    { value: `${stats.totalEnrollments}+`, label: 'total enrollments' },
+  ];
 
   return (
     <div className={styles.home}>

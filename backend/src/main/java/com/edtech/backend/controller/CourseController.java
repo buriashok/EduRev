@@ -1,6 +1,7 @@
 package com.edtech.backend.controller;
 
 import com.edtech.backend.model.Course;
+import com.edtech.backend.model.CourseStatus;
 import com.edtech.backend.model.User;
 import com.edtech.backend.repository.CourseRepository;
 import com.edtech.backend.repository.UserRepository;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -24,22 +26,48 @@ public class CourseController {
     private UserRepository userRepository;
 
     @GetMapping
-    public List<Course> getAllCourses() {
-        return courseRepository.findAll();
+    public List<Course> getAllCourses(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        // Admins can see all, others only APPROVED
+        if (userPrincipal != null && userPrincipal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return courseRepository.findAll();
+        }
+        return courseRepository.findByStatus(CourseStatus.APPROVED);
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Course> updateCourseStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> payload
+    ) {
+        return courseRepository.findById(id).map(course -> {
+            CourseStatus status = CourseStatus.valueOf(payload.get("status"));
+            course.setStatus(status);
+            return ResponseEntity.ok(courseRepository.save(course));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/recommendations")
     public List<Course> getRecommendations() {
-        // Simple mock recommendation: return first 3 courses
-        List<Course> all = courseRepository.findAll();
+        // Recommendations should only be from approved courses
+        List<Course> all = courseRepository.findByStatus(CourseStatus.APPROVED);
         return all.subList(0, Math.min(all.size(), 3));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Course> getCourseById(@PathVariable Long id) {
-        return courseRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Course> getCourseById(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return courseRepository.findById(id).map(course -> {
+            // Check if course is approved OR user is admin OR user is the instructor
+            boolean isAdmin = userPrincipal != null && userPrincipal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            boolean isInstructor = userPrincipal != null && course.getInstructor().getId().equals(userPrincipal.getId());
+            
+            if (course.getStatus() == CourseStatus.APPROVED || isAdmin || isInstructor) {
+                return ResponseEntity.ok(course);
+            }
+            return ResponseEntity.status(403).<Course>build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -47,6 +75,12 @@ public class CourseController {
     public ResponseEntity<Course> createCourse(@RequestBody Course course, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         User instructor = userRepository.findById(userPrincipal.getId()).orElseThrow();
         course.setInstructor(instructor);
+        
+        // Admins can auto-approve their own courses, instructors are pending
+        boolean isAdmin = userPrincipal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        course.setStatus(isAdmin ? CourseStatus.APPROVED : CourseStatus.PENDING);
+        
         if (course.getLessons() != null) {
             course.getLessons().forEach(lesson -> lesson.setCourse(course));
         }

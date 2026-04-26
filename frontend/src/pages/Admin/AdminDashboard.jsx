@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileUp, LogIn, LogOut, ShieldAlert, Trash2 } from 'lucide-react';
+import { FileUp, LogIn, LogOut, ShieldAlert, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
 import { adminApi, analyticsApi, getErrorMessage } from '../../services/api';
@@ -21,24 +21,39 @@ const AdminDashboard = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [busyUserId, setBusyUserId] = useState(null);
+  const [courses, setCourses] = useState([]);
+
+  const summaryCards = useMemo(
+    () => [
+      { label: 'Total Revenue', value: `₹${(stats.totalRevenue || 0).toLocaleString('en-IN')}` },
+      { label: 'Total Enrollments', value: stats.totalEnrollments || 0 },
+      { label: 'Total Users', value: stats.totalUsers ?? users.length },
+      { label: 'Frozen Accounts', value: stats.frozenAccounts ?? users.filter((user) => !user.isActive).length },
+    ],
+    [stats, users],
+  );
 
   const refreshAdminData = async () => {
-    const [usersResponse, logsResponse, statsResponse] = await Promise.all([
+    const [usersResponse, logsResponse, statsResponse, coursesResponse] = await Promise.all([
       adminApi.getUsers(),
       adminApi.getAuditLogs(),
       analyticsApi.getAdmin(),
+      adminApi.getCourses(),
     ]);
 
-    setUsers(usersResponse.data);
-    setLogs(logsResponse.data);
-    setStats(statsResponse.data);
+    setUsers(usersResponse.data || []);
+    setLogs(logsResponse.data || []);
+    setStats(statsResponse.data || {});
+    setCourses(coursesResponse.data || []);
   };
 
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
         await refreshAdminData();
       } catch (error) {
+        console.error('Admin Load Error:', error);
         setMessage(getErrorMessage(error, 'Failed to load admin data.'));
       } finally {
         setLoading(false);
@@ -48,14 +63,25 @@ const AdminDashboard = () => {
     load();
   }, []);
 
-  const summaryCards = useMemo(
-    () => [
-      { label: 'Total Users', value: stats.totalUsers ?? users.length },
-      { label: 'Active Sessions', value: stats.activeSessions ?? 0 },
-      { label: 'Frozen Accounts', value: stats.frozenAccounts ?? users.filter((user) => !user.isActive).length },
-    ],
-    [stats, users],
-  );
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm('Delete this course?')) return;
+    try {
+      await adminApi.deleteCourse(courseId);
+      setCourses(curr => curr.filter(c => c.id !== courseId));
+    } catch (error) {
+      setMessage('Failed to delete course');
+    }
+  };
+
+  const handleUpdateCourseStatus = async (courseId, status) => {
+    try {
+      const res = await adminApi.updateCourseStatus(courseId, status);
+      setCourses(curr => curr.map(c => c.id === courseId ? res.data : c));
+      setMessage(`Course ${status.toLowerCase()} successfully.`);
+    } catch (error) {
+      setMessage('Failed to update course status.');
+    }
+  };
 
   const handleRoleChange = async (userId, role) => {
     setBusyUserId(userId);
@@ -256,6 +282,54 @@ const AdminDashboard = () => {
                 {!!importResult.skippedRows?.length && <p>Skipped: {importResult.skippedRows.join(' | ')}</p>}
               </div>
             )}
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <h2>Course Moderation</h2>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Course Title</th>
+                  <th>Instructor</th>
+                  <th>Price</th>
+                  <th>Difficulty</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courses.map((course) => (
+                  <tr key={course.id}>
+                    <td>{course.title}</td>
+                    <td>{course.instructor ? `${course.instructor.firstName} ${course.instructor.lastName}` : 'System'}</td>
+                    <td>₹{(course.price || 0).toLocaleString('en-IN')}</td>
+                    <td><span className="badge">{course.difficulty}</span></td>
+                    <td>
+                      <span className={`${styles.statusPill} ${styles[course.status.toLowerCase()]}`}>
+                        {course.status}
+                      </span>
+                    </td>
+                    <td className={styles.actions}>
+                      {course.status === 'PENDING' && (
+                        <>
+                          <button onClick={() => handleUpdateCourseStatus(course.id, 'APPROVED')} title="Approve" className={styles.approveBtn}>
+                            <CheckCircle2 size={16} />
+                          </button>
+                          <button onClick={() => handleUpdateCourseStatus(course.id, 'REJECTED')} title="Reject" className={styles.rejectBtn}>
+                            <XCircle size={16} />
+                          </button>
+                        </>
+                      )}
+                      <button onClick={() => handleDeleteCourse(course.id)} title="Delete course" className={styles.deleteBtn}>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 

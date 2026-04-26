@@ -65,11 +65,20 @@ const CheckoutForm = ({ course }) => {
       setIsProcessing(false);
     } else if (paymentIntent.status === 'succeeded') {
       try {
+        // We still call confirm to provide immediate feedback, but the webhook is the source of truth
         await paymentApi.confirm(course.id, paymentIntent.id);
-        navigate('/dashboard', { state: { message: 'Enrollment successful!' } });
+        navigate('/dashboard', { 
+          state: { 
+            message: 'Payment successful! Your enrollment is being finalized and will appear in your dashboard shortly.' 
+          } 
+        });
       } catch (confirmError) {
-        setErrorMessage(getErrorMessage(confirmError, 'Payment succeeded but enrollment failed. Contact support.'));
-        setIsProcessing(false);
+        // Even if this fails, the webhook might still succeed
+        navigate('/dashboard', { 
+          state: { 
+            message: 'Payment received. We are processing your enrollment. Please check back in a few minutes.' 
+          } 
+        });
       }
     }
   };
@@ -98,7 +107,7 @@ const CheckoutForm = ({ course }) => {
       {errorMessage && <p className={styles.error}>{errorMessage}</p>}
 
       <button type="submit" className="btn-primary" disabled={!stripe || isProcessing || !clientSecret}>
-        {isProcessing ? <Loader2 className="animate-spin" size={20} /> : `Pay $${course.price.toFixed(2)}`}
+        {isProcessing ? <Loader2 className="animate-spin" size={20} /> : `Pay ₹${course.price.toLocaleString('en-IN')}`}
       </button>
 
       <div className={styles.secureBadge}>
@@ -144,11 +153,11 @@ const Checkout = () => {
         <div className={styles.orderSummary}>
           <div className={styles.item}>
             <span>Course Price</span>
-            <span>${course.price.toFixed(2)}</span>
+            <span>₹{course.price.toLocaleString('en-IN')}</span>
           </div>
           <div className={styles.total}>
             <span>Total</span>
-            <span>${course.price.toFixed(2)}</span>
+            <span>₹{course.price.toLocaleString('en-IN')}</span>
           </div>
         </div>
 

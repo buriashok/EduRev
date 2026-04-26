@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
+import { BookOpen, ChevronDown, Menu, Sparkles, X, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import NotificationPanel from '../Notifications/NotificationPanel';
+import { notificationApi } from '../../services/api';
 import styles from './Navbar.module.css';
 
 const publicLinks = [
   { label: 'Home', path: '/' },
   { label: 'Courses', path: '/courses' },
   { label: 'Live Classes', path: '/live-classes' },
-  { label: 'Community', path: '/forum' },
+  { label: 'Leaderboard', path: '/leaderboard' },
 ];
 
 const getDashboardPath = (role) => (role === 'ADMIN' ? '/admin/dashboard' : '/dashboard');
@@ -16,8 +18,27 @@ const getDashboardPath = (role) => (role === 'ADMIN' ? '/admin/dashboard' : '/da
 const Navbar = () => {
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      const fetchUnread = async () => {
+        try {
+          const res = await notificationApi.getUnreadCount();
+          setUnreadCount(res.data.count);
+        } catch (err) {
+          console.error('Failed to fetch unread count', err);
+        }
+      };
+
+      fetchUnread();
+      const interval = setInterval(fetchUnread, 30000); // Poll every 30s
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -56,6 +77,24 @@ const Navbar = () => {
           <button className={styles.mobileToggle} onClick={() => setMobileOpen((value) => !value)} aria-label="Toggle menu">
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+
+          {user && (
+            <div className={styles.notificationWrapper}>
+              <button 
+                className={`${styles.iconBtn} ${notificationsOpen ? styles.active : ''}`}
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                aria-label="Notifications"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
+              </button>
+              <NotificationPanel 
+                isOpen={notificationsOpen} 
+                onClose={() => setNotificationsOpen(false)} 
+                onUnreadUpdate={setUnreadCount}
+              />
+            </div>
+          )}
 
           {user ? (
             <div className={styles.userMenu}>

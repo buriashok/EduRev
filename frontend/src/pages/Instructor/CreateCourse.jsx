@@ -76,11 +76,11 @@ const CreateCourse = () => {
 
         <div className={styles.formGrid}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Price ($)</label>
+            <label className={styles.label}>Price (₹)</label>
             <input 
               type="number" 
               className={styles.input} 
-              placeholder="49.99"
+              placeholder="2499"
               value={course.price}
               onChange={(e) => setCourse({...course, price: e.target.value})}
               required

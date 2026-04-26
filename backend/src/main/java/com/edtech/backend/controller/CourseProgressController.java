@@ -65,6 +65,24 @@ public class CourseProgressController {
         progress.getCompletedLessons().add(lesson);
         progressRepository.save(progress);
 
-        return ResponseEntity.ok(Map.of("message", "Lesson marked as complete"));
+        // Award XP
+        awardXp(user, 50);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Lesson marked as complete",
+            "xpGained", 50,
+            "newTotalXp", user.getXp(),
+            "newLevel", user.getLevel()
+        ));
+    }
+
+    private void awardXp(User user, int amount) {
+        user.setXp(user.getXp() + amount);
+        // Level up logic: Each level requires level * 1000 XP
+        int newLevel = (int) (user.getXp() / 1000) + 1;
+        if (newLevel > user.getLevel()) {
+            user.setLevel(newLevel);
+        }
     }
 }

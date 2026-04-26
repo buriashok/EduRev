@@ -19,6 +19,8 @@ import SessionManager from './pages/Settings/SessionManager';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import CourseView from './pages/Courses/CourseView';
 import Certificate from './pages/Certificate/Certificate';
+import Leaderboard from './pages/Leaderboard/Leaderboard';
+import AiMentor from './components/AiMentor/AiMentor';
 import { useAuth } from './context/AuthContext';
 
 function App() {
@@ -61,8 +63,10 @@ function AppContent() {
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/learn/:courseId" element={<RequireAuth><CourseView /></RequireAuth>} />
           <Route path="/certificate/:id" element={<RequireAuth><Certificate /></RequireAuth>} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </main>
+      <AiMentor />
       {location.pathname === '/' && <Footer />}
     </>
   );

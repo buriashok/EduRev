@@ -206,7 +206,15 @@
   line-height: 1.7;
   color: var(--color-text);
   margin-bottom: 3rem;
-  white-space: pre-wrap;
+}
+
+.lessonBody img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  margin: 2rem 0;
+  box-shadow: var(--shadow-md);
+  display: block;
 }
 
 .footer {

@@ -68,6 +68,12 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "xp", nullable = false, columnDefinition = "bigint default 0")
+    private Long xp = 0L;
+
+    @Column(name = "level", nullable = false, columnDefinition = "integer default 1")
+    private Integer level = 1;
+
     @ManyToMany
     @JsonIgnore
     @JoinTable(
@@ -234,5 +240,21 @@ public class User {
 
     public void setEnrolledCourses(List<Course> enrolledCourses) {
         this.enrolledCourses = enrolledCourses;
+    }
+
+    public Long getXp() {
+        return xp;
+    }
+
+    public void setXp(Long xp) {
+        this.xp = xp;
+    }
+
+    public Integer getLevel() {
+        return level;
+    }
+
+    public void setLevel(Integer level) {
+        this.level = level;
     }
 }

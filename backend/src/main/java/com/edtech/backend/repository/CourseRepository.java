@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findByInstructorId(Long instructorId);
+    java.util.Optional<Course> findByTitle(String title);
+    List<Course> findByStatus(com.edtech.backend.model.CourseStatus status);
 }

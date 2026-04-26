@@ -6,6 +6,7 @@ import com.edtech.backend.model.User;
 import com.edtech.backend.repository.CourseRepository;
 import com.edtech.backend.repository.PaymentRepository;
 import com.edtech.backend.repository.UserRepository;
+import com.edtech.backend.model.NotificationType;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -26,6 +27,9 @@ public class PaymentService {
     @Value("${stripe.api.key}")
     private String stripeSecretKey;
 
+    @Value("${stripe.webhook.secret}")
+    private String webhookSecret;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -34,6 +38,9 @@ public class PaymentService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @PostConstruct
     public void init() {
@@ -57,7 +64,7 @@ public class PaymentService {
 
         PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                 .setAmount(amount)
-                .setCurrency("usd")
+                .setCurrency("inr")
                 .putMetadata("userId", String.valueOf(userId))
                 .putMetadata("courseId", String.valueOf(courseId))
                 .build();
@@ -71,6 +78,11 @@ public class PaymentService {
 
     @Transactional
     public void confirmEnrollment(Long userId, Long courseId, String paymentIntentId) {
+        if (paymentRepository.existsByStripePaymentIntentId(paymentIntentId)) {
+            System.out.println("Payment already processed for intent: " + paymentIntentId);
+            return;
+        }
+
         User user = userRepository.findById(userId).orElseThrow();
         Course course = courseRepository.findById(courseId).orElseThrow();
 
@@ -85,6 +97,14 @@ public class PaymentService {
             payment.setStripePaymentIntentId(paymentIntentId);
             payment.setStatus("SUCCEEDED");
             paymentRepository.save(payment);
+
+            notificationService.createNotification(user, "Enrollment Successful", 
+                "You have successfully enrolled in: " + course.getTitle() + ". Happy learning!", 
+                NotificationType.SUCCESS, "/course/" + course.getId());
         }
+    }
+
+    public String getWebhookSecret() {
+        return webhookSecret;
     }
 }
