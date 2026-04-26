@@ -155,13 +155,26 @@
   padding: 3rem 2rem;
 }
 
-.videoPlaceholder {
+.videoContainer {
   width: 100%;
   aspect-ratio: 16 / 9;
   background: #000;
   border-radius: 1rem;
   margin-bottom: 2.5rem;
   overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.videoPlayer {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.videoPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: #000;
 }
 
 .videoOverlay {

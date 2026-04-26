@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, Clock3, UserRound, Video } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, UserRound, Video, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { getErrorMessage, liveClassApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import styles from './LiveClasses.module.css';
 
 const LiveClasses = () => {
+  const { user } = useAuth();
   const [liveClasses, setLiveClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -37,6 +39,25 @@ const LiveClasses = () => {
     }
   };
 
+  const handleRegister = async (id) => {
+    if (!user) {
+      setMessage('Please sign in to register for live classes.');
+      return;
+    }
+    try {
+      await liveClassApi.register(id);
+      setLiveClasses(curr => curr.map(item => {
+        if (item.id === id) {
+          return { ...item, registeredUsers: [...(item.registeredUsers || []), user] };
+        }
+        return item;
+      }));
+      setMessage('Registered successfully! You will receive a reminder before the class starts.');
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Failed to register for the class.'));
+    }
+  };
+
   return (
     <div className={`container ${styles.livePage}`}>
       <div className="section-heading">
@@ -61,13 +82,18 @@ const LiveClasses = () => {
           ) : (
             liveClasses.map((item) => {
               const startsSoon = new Date(item.startTime) <= upcomingThreshold;
+              const isRegistered = item.registeredUsers?.some(u => u.id === user?.id);
+              const isInstructor = user?.id === item.instructor?.id;
 
               return (
                 <article key={item.id} className={`glass-panel ${styles.classCard} animate-fade-in`}>
-                  <span className={`status-pill ${startsSoon ? 'success' : 'warning'}`}>
-                    <CalendarDays size={14} />
-                    {startsSoon ? 'Starting soon' : 'Upcoming'}
-                  </span>
+                  <div className={styles.cardHeader}>
+                    <span className={`status-pill ${item.completed ? 'secondary' : (startsSoon ? 'success' : 'warning')}`}>
+                      <CalendarDays size={14} />
+                      {item.completed ? 'Finished' : (startsSoon ? 'Starting soon' : 'Upcoming')}
+                    </span>
+                    {isRegistered && <span className={styles.registeredBadge}><CheckCircle2 size={12} /> Registered</span>}
+                  </div>
 
                   <h2 className={styles.classTitle}>{item.title}</h2>
                   <p className={styles.description}>{item.description || 'Instructor-led session with time for guided questions and discussion.'}</p>
@@ -77,10 +103,37 @@ const LiveClasses = () => {
                     <div className={styles.metaItem}><Clock3 size={16} /> {new Date(item.startTime).toLocaleString()}</div>
                   </div>
 
-                  <button className="btn-primary" onClick={() => handleJoin(item.id)}>
-                    Join room
-                    <ArrowRight size={16} />
-                  </button>
+                  <div className={styles.actions}>
+                    {item.completed ? (
+                      item.recordingUrl ? (
+                        <button className="btn-secondary" onClick={() => window.open(item.recordingUrl, '_blank')}>
+                          <PlayCircle size={16} />
+                          Watch Recording
+                        </button>
+                      ) : (
+                        <button className="btn-secondary" disabled>Recording coming soon</button>
+                      )
+                    ) : (
+                      <>
+                        {!isRegistered && !isInstructor && (
+                          <button className="btn-primary" onClick={() => handleRegister(item.id)}>
+                            Register Now
+                          </button>
+                        )}
+                        {(isRegistered || isInstructor) && (
+                          <button className="btn-primary" onClick={() => handleJoin(item.id)}>
+                            Join Room
+                            <ArrowRight size={16} />
+                          </button>
+                        )}
+                        {isInstructor && (
+                          <button className="btn-secondary" onClick={() => window.location.href = `/instructor/live-classes/${item.id}`}>
+                            Manage
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </article>
               );
             })

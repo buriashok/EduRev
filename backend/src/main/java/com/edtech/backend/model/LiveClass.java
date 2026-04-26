@@ -2,6 +2,8 @@ package com.edtech.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "live_classes")
@@ -32,6 +34,20 @@ public class LiveClass {
     private Course course;
 
     private String meetingLink; // Agora/Zoom/WebRTC link
+
+    private String recordingUrl;
+
+    private int maxCapacity = 100;
+
+    private boolean isCompleted = false;
+
+    @ManyToMany
+    @JoinTable(
+        name = "live_class_registrations",
+        joinColumns = @JoinColumn(name = "live_class_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> registeredUsers = new HashSet<>();
 
     // Getters and Setters
 
@@ -97,5 +113,37 @@ public class LiveClass {
 
     public void setMeetingLink(String meetingLink) {
         this.meetingLink = meetingLink;
+    }
+
+    public String getRecordingUrl() {
+        return recordingUrl;
+    }
+
+    public void setRecordingUrl(String recordingUrl) {
+        this.recordingUrl = recordingUrl;
+    }
+
+    public int getMaxCapacity() {
+        return maxCapacity;
+    }
+
+    public void setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+    }
+
+    public boolean isCompleted() {
+        return isCompleted;
+    }
+
+    public void setCompleted(boolean completed) {
+        isCompleted = completed;
+    }
+
+    public Set<User> getRegisteredUsers() {
+        return registeredUsers;
+    }
+
+    public void setRegisteredUsers(Set<User> registeredUsers) {
+        this.registeredUsers = registeredUsers;
     }
 }

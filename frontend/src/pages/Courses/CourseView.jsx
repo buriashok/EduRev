@@ -83,6 +83,13 @@ const CourseView = () => {
     </div>
   );
 
+  const getYoutubeEmbedUrl = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+  };
+
   return (
     <div className={styles.courseView}>
       <header className={styles.header}>
@@ -135,12 +142,36 @@ const CourseView = () => {
         <section className={styles.content}>
           {currentLesson ? (
             <div className={styles.lessonContent}>
-              <div className={styles.videoPlaceholder}>
-                <div className={styles.videoOverlay}>
-                  <PlayCircle size={64} />
-                  <p>Video content for "{currentLesson.title}" would play here.</p>
-                  {currentLesson.videoUrl && <span className={styles.videoUrl}>{currentLesson.videoUrl}</span>}
-                </div>
+              <div className={styles.videoContainer}>
+                {currentLesson.videoUrl ? (
+                  getYoutubeEmbedUrl(currentLesson.videoUrl) ? (
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={getYoutubeEmbedUrl(currentLesson.videoUrl)}
+                      title={currentLesson.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className={styles.videoPlayer}
+                    ></iframe>
+                  ) : (
+                    <video 
+                      controls 
+                      src={currentLesson.videoUrl} 
+                      className={styles.videoPlayer}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  )
+                ) : (
+                  <div className={styles.videoPlaceholder}>
+                    <div className={styles.videoOverlay}>
+                      <PlayCircle size={64} />
+                      <p>Video content for "{currentLesson.title}" would play here.</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className={styles.textDetails}>

@@ -135,7 +135,7 @@ const CreateCourse = () => {
                   required
                 />
               </div>
-              <div className={styles.formGroup}>
+              <div className={styles.formGroup} style={{marginBottom: '1rem'}}>
                 <label className={styles.label}>Content / Notes</label>
                 <textarea 
                   className={styles.textarea} 
@@ -143,6 +143,16 @@ const CreateCourse = () => {
                   placeholder="Lesson notes..."
                   value={lesson.content}
                   onChange={(e) => handleLessonChange(index, 'content', e.target.value)}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Video URL (YouTube/Direct Link)</label>
+                <input 
+                  type="text" 
+                  className={styles.input} 
+                  placeholder="e.g. https://www.youtube.com/watch?v=..."
+                  value={lesson.videoUrl || ''}
+                  onChange={(e) => handleLessonChange(index, 'videoUrl', e.target.value)}
                 />
               </div>
             </div>

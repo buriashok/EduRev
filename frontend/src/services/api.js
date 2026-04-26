@@ -118,6 +118,9 @@ export const courseApi = {
 
 export const liveClassApi = {
   getUpcoming: () => api.get('/api/live-classes/upcoming'),
+  register: (id) => api.post(`/api/live-classes/${id}/register`),
+  getRegistrations: (id) => api.get(`/api/live-classes/${id}/registrations`),
+  complete: (id, recordingUrl) => api.post(`/api/live-classes/${id}/complete`, { recordingUrl }),
   join: (id) => api.post(`/api/live-classes/${id}/join`),
 };
 

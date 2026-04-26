@@ -1,0 +1,162 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
+}
+
+.messagePanel {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(15, 98, 254, 0.08);
+  color: var(--color-primary);
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.infoCard {
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.infoRow {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.linkBox {
+  background: var(--color-bg-alt);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.linkBox a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  word-break: break-all;
+}
+
+.managementCard {
+  padding: 2rem;
+}
+
+.managementCard h2 {
+  margin-bottom: 1rem;
+}
+
+.managementCard p {
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+
+.inputWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0 1rem;
+}
+
+.inputWithIcon input {
+  border: none;
+  padding: 1rem 0;
+  flex: 1;
+  outline: none;
+  font-size: 1rem;
+}
+
+.registrationCard {
+  padding: 1.5rem;
+}
+
+.registrationCard h3 {
+  margin-bottom: 1.5rem;
+}
+
+.studentList {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.studentItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.studentItem img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.studentItem div {
+  display: flex;
+  flex-direction: column;
+}
+
+.studentItem strong {
+  font-size: 0.95rem;
+}
+
+.studentItem span {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 2rem;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

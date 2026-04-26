@@ -11,6 +11,7 @@ import Courses from './pages/Courses/Courses';
 import CreateCourse from './pages/Instructor/CreateCourse';
 import Quiz from './pages/Quiz/Quiz';
 import LiveClasses from './pages/LiveClasses/LiveClasses';
+import LiveClassDetail from './pages/LiveClasses/LiveClassDetail';
 import Forum from './pages/Forum/Forum';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Checkout from './pages/Checkout/Checkout';
@@ -53,6 +54,7 @@ function AppContent() {
           <Route path="/register" element={<Register />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/instructor/create-course" element={<RequireRole roles={['INSTRUCTOR', 'ADMIN']}><CreateCourse /></RequireRole>} />
+          <Route path="/instructor/live-classes/:id" element={<RequireRole roles={['INSTRUCTOR', 'ADMIN']}><LiveClassDetail /></RequireRole>} />
           <Route path="/quiz/:quizId" element={<Quiz />} />
           <Route path="/live-classes" element={<LiveClasses />} />
           <Route path="/forum" element={<Forum />} />
