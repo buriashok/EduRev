@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Circle, PlayCircle, BookOpen, ArrowLeft, Loader2, Award } from 'lucide-react';
 import { courseApi, progressApi, certificateApi, getErrorMessage } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import styles from './CourseView.module.css';
 
 const CourseView = () => {
+  const { user } = useAuth();
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
@@ -94,7 +96,7 @@ const CourseView = () => {
     <div className={styles.courseView}>
       <header className={styles.header}>
         <button className={styles.backBtn} onClick={() => navigate('/dashboard')}>
-          <ArrowLeft size={20} />
+          <ArrowLeft size(20) />
           <span>Back to Dashboard</span>
         </button>
         <div className={styles.progressInfo}>
@@ -143,7 +145,16 @@ const CourseView = () => {
           {currentLesson ? (
             <div className={styles.lessonContent}>
               <div className={styles.videoContainer}>
-                {currentLesson.videoUrl ? (
+                {(!user && !currentLesson.preview) ? (
+                  <div className={styles.lockedOverlay}>
+                    <div className={`glass-panel ${styles.lockedCard}`}>
+                      <PlayCircle size={48} />
+                      <h2>Premium Content</h2>
+                      <p>This lesson is restricted to enrolled students. Sign in to start learning!</p>
+                      <button className="btn-primary" onClick={() => navigate('/login')}>Sign in to Join</button>
+                    </div>
+                  </div>
+                ) : currentLesson.videoUrl ? (
                   getYoutubeEmbedUrl(currentLesson.videoUrl) ? (
                     <iframe
                       width="100%"

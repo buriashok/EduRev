@@ -58,9 +58,14 @@ public class AnalyticsService {
     public Map<String, Object> getInstructorAnalytics(Long instructorId) {
         Map<String, Object> stats = new HashMap<>();
         long courses = courseRepository.findByInstructorId(instructorId).size();
-        stats.put("courseRevenue", 4200.00);
-        stats.put("enrolledStudents", 320);
-        stats.put("averageRating", 4.8);
+        
+        java.math.BigDecimal instructorRevenueCents = paymentRepository.sumRevenueByInstructor(instructorId);
+        double totalRevenue = instructorRevenueCents != null ? instructorRevenueCents.doubleValue() / 100.0 : 0.0;
+        long enrolledStudents = paymentRepository.countEnrollmentsByInstructor(instructorId);
+
+        stats.put("courseRevenue", totalRevenue);
+        stats.put("enrolledStudents", enrolledStudents);
+        stats.put("averageRating", 4.5); // Rating system can be implemented later
         stats.put("courseCount", courses);
         return stats;
     }

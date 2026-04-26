@@ -6,12 +6,35 @@ import NotificationPanel from '../Notifications/NotificationPanel';
 import { notificationApi } from '../../services/api';
 import styles from './Navbar.module.css';
 
-const publicLinks = [
-  { label: 'Home', path: '/' },
-  { label: 'Courses', path: '/courses' },
-  { label: 'Live Classes', path: '/live-classes' },
-  { label: 'Leaderboard', path: '/leaderboard' },
-];
+const getLinks = (role) => {
+  if (!role) return [
+    { label: 'Home', path: '/' },
+    { label: 'Courses', path: '/courses' },
+  ];
+
+  if (role === 'STUDENT') return [
+    { label: 'Home', path: '/' },
+    { label: 'Courses', path: '/courses' },
+    { label: 'Live Classes', path: '/live-classes' },
+    { label: 'Leaderboard', path: '/leaderboard' },
+    { label: 'Community', path: '/forum' },
+  ];
+
+  if (role === 'INSTRUCTOR') return [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Create Course', path: '/instructor/create-course' },
+    { label: 'Live Sessions', path: '/live-classes' }, // They can create here
+    { label: 'User Analytics', path: '/admin/dashboard' }, // Re-using analytics
+  ];
+
+  if (role === 'ADMIN') return [
+    { label: 'System Control', path: '/admin/dashboard' },
+    { label: 'Courses', path: '/courses' },
+    { label: 'Settings', path: '/settings' },
+  ];
+
+  return [];
+};
 
 const getDashboardPath = (role) => (role === 'ADMIN' ? '/admin/dashboard' : '/dashboard');
 
@@ -66,7 +89,7 @@ const Navbar = () => {
         </Link>
 
         <div className={styles.links}>
-          {publicLinks.map((link) => (
+          {getLinks(user?.role).map((link) => (
             <Link key={link.path} to={link.path} className={styles.link}>
               {link.label}
             </Link>
@@ -131,7 +154,7 @@ const Navbar = () => {
 
       {mobileOpen && (
         <div className={styles.mobileMenu}>
-          {publicLinks.map((link) => (
+          {getLinks(user?.role).map((link) => (
             <Link key={link.path} to={link.path} className={styles.mobileLink} onClick={() => setMobileOpen(false)}>
               {link.label}
             </Link>

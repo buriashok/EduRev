@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, Clock3, UserRound, Video, PlayCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, UserRound, Video, Plus, X, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { getErrorMessage, liveClassApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import styles from './LiveClasses.module.css';
@@ -8,23 +8,39 @@ const LiveClasses = () => {
   const { user } = useAuth();
   const [liveClasses, setLiveClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [newClass, setNewClass] = useState({ title: '', description: '', startTime: '', meetingLink: '', maxCapacity: 20 });
   const [message, setMessage] = useState('');
   const [referenceNow] = useState(() => Date.now());
 
-  useEffect(() => {
-    const fetchLiveClasses = async () => {
-      try {
-        const response = await liveClassApi.getUpcoming();
-        setLiveClasses(response.data);
-      } catch (error) {
-        setMessage(getErrorMessage(error, 'Failed to load live classes.'));
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchLiveClasses = async () => {
+    setLoading(true);
+    try {
+      const response = await liveClassApi.getUpcoming();
+      setLiveClasses(response.data);
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Failed to load live classes.'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchLiveClasses();
   }, []);
+
+  const handleCreateSession = async (e) => {
+    e.preventDefault();
+    try {
+      await liveClassApi.create(newClass);
+      setMessage('Session scheduled successfully!');
+      setShowForm(false);
+      setNewClass({ title: '', description: '', startTime: '', meetingLink: '', maxCapacity: 20 });
+      fetchLiveClasses();
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Failed to schedule session.'));
+    }
+  };
 
   const upcomingThreshold = useMemo(() => new Date(referenceNow + 24 * 60 * 60 * 1000), [referenceNow]);
 
@@ -60,10 +76,81 @@ const LiveClasses = () => {
 
   return (
     <div className={`container ${styles.livePage}`}>
-      <div className="section-heading">
-        <h1>Live classes that keep learning human</h1>
-        <p>Join workshops, mentor hours, and focused sessions with clear timing and one-click access.</p>
+      <div className={styles.header}>
+        <div className="section-heading">
+          <h1>Live classes that keep learning human</h1>
+          <p>Join workshops, mentor hours, and focused sessions with clear timing and one-click access.</p>
+        </div>
+        {user?.role === 'INSTRUCTOR' && (
+          <button className="btn-primary" onClick={() => setShowForm(true)}>
+            <Plus size={18} /> Schedule Session
+          </button>
+        )}
       </div>
+
+      {showForm && (
+        <div className={styles.modalOverlay}>
+          <form onSubmit={handleCreateSession} className={`glass-panel ${styles.creationForm} animate-scale-in`}>
+            <div className={styles.formHeader}>
+              <h2>Schedule Live Session</h2>
+              <button type="button" onClick={() => setShowForm(false)}><X size(20) /></button>
+            </div>
+            
+            <div className={styles.formGrid}>
+              <div className={styles.inputGroup}>
+                <label>Session Title</label>
+                <input 
+                  type="text" 
+                  value={newClass.title} 
+                  onChange={e => setNewClass({...newClass, title: e.target.value})} 
+                  placeholder="e.g. Advanced System Design Q&A"
+                  required 
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label>Start Time</label>
+                <input 
+                  type="datetime-local" 
+                  value={newClass.startTime} 
+                  onChange={e => setNewClass({...newClass, startTime: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label>Meeting Link (Zoom/Google Meet)</label>
+                <input 
+                  type="url" 
+                  value={newClass.meetingLink} 
+                  onChange={e => setNewClass({...newClass, meetingLink: e.target.value})} 
+                  placeholder="https://meet.google.com/..."
+                  required 
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label>Capacity</label>
+                <input 
+                  type="number" 
+                  value={newClass.maxCapacity} 
+                  onChange={e => setNewClass({...newClass, maxCapacity: e.target.value})} 
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label>Description</label>
+              <textarea 
+                value={newClass.description} 
+                onChange={e => setNewClass({...newClass, description: e.target.value})} 
+                rows="3"
+                placeholder="What will students learn in this session?"
+              />
+            </div>
+
+            <button type="submit" className="btn-primary">Confirm & Publish</button>
+          </form>
+        </div>
+      )}
 
       {message && <div className={styles.message}>{message}</div>}
 

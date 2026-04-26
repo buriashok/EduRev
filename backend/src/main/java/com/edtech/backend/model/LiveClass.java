@@ -37,9 +37,10 @@ public class LiveClass {
 
     private String recordingUrl;
 
-    private int maxCapacity = 100;
-
+    @Column(nullable = false)
     private boolean isCompleted = false;
+
+    private int maxCapacity = 50;
 
     @ManyToMany
     @JoinTable(
@@ -123,20 +124,20 @@ public class LiveClass {
         this.recordingUrl = recordingUrl;
     }
 
-    public int getMaxCapacity() {
-        return maxCapacity;
-    }
-
-    public void setMaxCapacity(int maxCapacity) {
-        this.maxCapacity = maxCapacity;
-    }
-
     public boolean isCompleted() {
         return isCompleted;
     }
 
     public void setCompleted(boolean completed) {
         isCompleted = completed;
+    }
+
+    public int getMaxCapacity() {
+        return maxCapacity;
+    }
+
+    public void setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
     }
 
     public Set<User> getRegisteredUsers() {

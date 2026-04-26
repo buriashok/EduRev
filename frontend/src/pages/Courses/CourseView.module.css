@@ -177,6 +177,39 @@
   background: #000;
 }
 
+.lockedOverlay {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.lockedCard {
+  max-width: 400px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lockedCard h2 {
+  color: #fff;
+  margin: 0;
+}
+
+.lockedCard p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
 .videoOverlay {
   width: 100%;
   height: 100%;

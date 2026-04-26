@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, BookOpen, Clock3, TrendingUp, Users, ArrowRight, PlayCircle, Plus, GraduationCap } from 'lucide-react';
 import Recommendations from '../../components/Recommendations/Recommendations';
-import { analyticsApi, userApi, getErrorMessage } from '../../services/api';
+import { analyticsApi, userApi, instructorApi, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Dashboard.module.css';
 
@@ -13,83 +13,48 @@ const fallbackStats = {
   completionRate: '78%',
 };
 
+import StudentDashboard from './StudentDashboard';
+import InstructorDashboard from './InstructorDashboard';
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [stats, setStats] = useState(fallbackStats);
+  const [stats, setStats] = useState({});
+  const [instructorAnalytics, setInstructorAnalytics] = useState(null);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
-  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const loadAnalytics = async () => {
+    const loadData = async () => {
       try {
-        if (user?.role === 'ADMIN') {
-          const response = await analyticsApi.getAdmin();
-          setStats(response.data);
-          return;
+        if (!user) return;
+        
+        let analyticsRes;
+        if (user.role === 'ADMIN') {
+          analyticsRes = await analyticsApi.getAdmin();
+        } else if (user.role === 'INSTRUCTOR') {
+          analyticsRes = await analyticsApi.getInstructor();
+          const detailedRes = await instructorApi.getAnalytics();
+          setInstructorAnalytics(detailedRes.data);
+        } else {
+          analyticsRes = await analyticsApi.getUser();
         }
+        setStats(analyticsRes.data);
 
-        if (user?.role === 'INSTRUCTOR') {
-          const response = await analyticsApi.getInstructor();
-          setStats({
-            totalRevenue: response.data.courseRevenue,
-            activeStudents: response.data.enrolledStudents,
-            totalCourses: 1,
-            completionRate: `${Math.round(response.data.averageRating * 20)}%`,
-          });
-          return;
-        }
-
-        if (user?.role === 'STUDENT') {
-          const response = await analyticsApi.getUser();
-          setStats({
-            coursesEnrolled: response.data.coursesEnrolled,
-            certificatesEarned: response.data.certificatesEarned,
-            averageScore: `${response.data.averageScore}%`,
-            activeTime: '0h' // Placeholder for future time tracking
-          });
-          return;
-        }
+        const coursesRes = await userApi.getMyCourses();
+        setEnrolledCourses(coursesRes.data);
       } catch (error) {
-        setMessage(getErrorMessage(error, 'Showing default dashboard insights for now.'));
+        setMessage(getErrorMessage(error, 'Dashboard data is temporarily unavailable.'));
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadAnalytics();
+    loadData();
   }, [user?.role]);
 
-  useEffect(() => {
-    const fetchEnrolled = async () => {
-      try {
-        const response = await userApi.getMyCourses();
-        setEnrolledCourses(response.data);
-      } catch (error) {
-        console.error('Failed to load enrolled courses', error);
-      } finally {
-        setLoadingCourses(false);
-      }
-    };
-
-    if (user) fetchEnrolled();
-  }, [user]);
-
-  const cards = useMemo(() => {
-    if (user?.role === 'ADMIN' || user?.role === 'INSTRUCTOR') {
-      return [
-        { label: 'Revenue', value: `₹${Number(stats.totalRevenue || 0).toLocaleString('en-IN')}`, icon: TrendingUp },
-        { label: 'Learners', value: Number(stats.activeStudents).toLocaleString(), icon: Users },
-        { label: 'Courses', value: Number(stats.totalCourses).toLocaleString(), icon: BookOpen },
-        { label: 'Completion', value: `${stats.completionRate}`, icon: Activity },
-      ];
-    }
-    return [
-      { label: 'Enrolled', value: stats.coursesEnrolled || 0, icon: BookOpen },
-      { label: 'Certificates', value: stats.certificatesEarned || 0, icon: GraduationCap },
-      { label: 'Avg. Score', value: stats.averageScore || '0%', icon: TrendingUp },
-      { label: 'Study Time', value: stats.activeTime || '0h', icon: Clock3 },
-    ];
-  }, [stats, user?.role]);
+  if (loading) return <div className="flex-center" style={{ minHeight: '80vh' }}><div className="spinner" /></div>;
 
   return (
     <div className={`container ${styles.dashboardPage}`}>
@@ -101,7 +66,7 @@ const Dashboard = () => {
                 <span className={styles.levelValue}>{user?.level || 1}</span>
              </div>
              <div>
-                <h1>{user ? `Welcome back, ${user.firstName}` : 'Learning dashboard'}</h1>
+                <h1>Welcome back, {user?.firstName}</h1>
                 <div className={styles.xpWrapper}>
                    <div className={styles.xpBar}>
                       <div className={styles.xpFill} style={{ width: `${((user?.xp % 1000) / 1000) * 100}%` }} />
@@ -110,80 +75,43 @@ const Dashboard = () => {
                 </div>
              </div>
           </div>
-          {user?.role === 'INSTRUCTOR' && (
-            <button 
-              className="btn-primary" 
-              onClick={() => navigate('/instructor/create-course')}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Plus size={18} />
-              Create New Course
-            </button>
-          )}
+          <div className={styles.roleTag}>
+             <GraduationCap size={16} />
+             <span>{user?.role} ACCOUNT</span>
+          </div>
         </div>
       </div>
 
       {message && <div className={styles.infoBanner}>{message}</div>}
 
-      <div className={styles.statsGrid}>
-        {cards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div key={card.label} className={`glass-panel ${styles.statCard} animate-fade-in`}>
-              <div className={styles.statIcon}>
-                <Icon size={22} />
-              </div>
-              <div className={styles.statValue}>{card.value}</div>
-              <div className={styles.statLabel}>{card.label}</div>
-            </div>
-          );
-        })}
-      </div>
+      {user?.role === 'STUDENT' && (
+        <StudentDashboard 
+          user={user} 
+          stats={{
+            coursesEnrolled: stats.coursesEnrolled,
+            certificatesEarned: stats.certificatesEarned,
+            averageScore: `${stats.averageScore || 0}%`,
+            activeTime: stats.activeTime || '0h'
+          }} 
+          enrolledCourses={enrolledCourses} 
+          loadingCourses={loading} 
+        />
+      )}
 
-      <div className={styles.learningSection}>
-        <div className={styles.sectionHeader}>
-          <h2>Continue Learning</h2>
-          <span className={styles.courseCount}>{enrolledCourses.length} active tracks</span>
-        </div>
-        
-        {loadingCourses ? (
-          <div className="flex-center" style={{ padding: '2rem' }}>
-            <div className="spinner" />
-          </div>
-        ) : enrolledCourses.length > 0 ? (
-          <div className={styles.courseGrid}>
-            {enrolledCourses.map((course) => (
-              <div key={course.id} className={`glass-panel ${styles.enrolledCard} animate-fade-in`}>
-                <div className={styles.courseInfo}>
-                  <div className="badge">{course.difficulty}</div>
-                  <h3>{course.title}</h3>
-                  <div className={styles.progressRow}>
-                    <div className={styles.dashboardProgressBar}>
-                      <div className={styles.dashboardProgressFill} style={{ width: '0%' }} />
-                    </div>
-                    <span className={styles.progressPercent}>0%</span>
-                  </div>
-                </div>
-                <button 
-                  className={`btn-primary ${styles.continueBtn}`}
-                  onClick={() => navigate(`/learn/${course.id}`)}
-                >
-                  <PlayCircle size={18} />
-                  Continue
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.emptyEnrolled}>
-            <BookOpen size={48} />
-            <p>You haven't enrolled in any courses yet.</p>
-            <button className="btn-secondary" onClick={() => navigate('/courses')}>Browse Catalog</button>
-          </div>
-        )}
-      </div>
-
-      <Recommendations />
+      {(user?.role === 'INSTRUCTOR' || user?.role === 'ADMIN') && (
+        <InstructorDashboard 
+          user={user} 
+          stats={{
+            totalRevenue: user.role === 'ADMIN' ? stats.totalRevenue : stats.courseRevenue,
+            activeStudents: user.role === 'ADMIN' ? stats.activeStudents : stats.enrolledStudents,
+            totalCourses: user.role === 'ADMIN' ? stats.totalCourses : stats.courseCount,
+            completionRate: stats.completionRate || '4.5'
+          }} 
+          detailedAnalytics={instructorAnalytics}
+          myCourses={enrolledCourses} 
+          loadingCourses={loading} 
+        />
+      )}
     </div>
   );
 };

@@ -33,18 +33,23 @@ const AdminDashboard = () => {
     [stats, users],
   );
 
+  const [activeTab, setActiveTab] = useState('overview');
+  const [settings, setSettings] = useState({ siteName: 'EduRev', maintenanceMode: 'false', primaryColor: '#0f62fe' });
+
   const refreshAdminData = async () => {
-    const [usersResponse, logsResponse, statsResponse, coursesResponse] = await Promise.all([
+    const [usersResponse, logsResponse, statsResponse, coursesResponse, settingsResponse] = await Promise.all([
       adminApi.getUsers(),
       adminApi.getAuditLogs(),
       analyticsApi.getAdmin(),
       adminApi.getCourses(),
+      adminApi.getSettings(),
     ]);
 
     setUsers(usersResponse.data || []);
     setLogs(logsResponse.data || []);
     setStats(statsResponse.data || {});
     setCourses(coursesResponse.data || []);
+    setSettings(settingsResponse.data || {});
   };
 
   useEffect(() => {
@@ -62,6 +67,16 @@ const AdminDashboard = () => {
 
     load();
   }, []);
+
+  const handleUpdateSettings = async (e) => {
+    e.preventDefault();
+    try {
+      await adminApi.updateSettings(settings);
+      setMessage('Platform settings updated successfully.');
+    } catch (error) {
+      setMessage('Failed to update settings.');
+    }
+  };
 
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm('Delete this course?')) return;
@@ -199,167 +214,226 @@ const AdminDashboard = () => {
 
         {message && <div className={styles.notice}>{message}</div>}
 
-        <div className={styles.stats}>
-          {summaryCards.map((card) => (
-            <div key={card.label} className="glass-card">
-              <h3>{card.label}</h3>
-              <p>{card.value}</p>
+        <div className={styles.tabNav}>
+          <button className={activeTab === 'overview' ? styles.activeTab : ''} onClick={() => setActiveTab('overview')}>Overview</button>
+          <button className={activeTab === 'users' ? styles.activeTab : ''} onClick={() => setActiveTab('users')}>User Management</button>
+          <button className={activeTab === 'courses' ? styles.activeTab : ''} onClick={() => setActiveTab('courses')}>Course Moderation</button>
+          <button className={activeTab === 'settings' ? styles.activeTab : ''} onClick={() => setActiveTab('settings')}>Platform Settings</button>
+        </div>
+
+        {activeTab === 'overview' && (
+          <>
+            <div className={styles.stats}>
+              {summaryCards.map((card) => (
+                <div key={card.label} className="glass-card">
+                  <h3>{card.label}</h3>
+                  <p>{card.value}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>User Management</h2>
-            <button className="btn-primary" onClick={handleImport}>Import Users</button>
-          </div>
-
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Last Login</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>{`${user.firstName} ${user.lastName}`.trim()}</td>
-                    <td>{user.email}</td>
-                    <td>
-                      <select
-                        className={styles.roleSelect}
-                        value={user.role}
-                        onChange={(event) => handleRoleChange(user.id, event.target.value)}
-                        disabled={busyUserId === user.id}
-                      >
-                        {roleOptions.map((role) => (
-                          <option key={role} value={role}>{role}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <span className={user.isActive ? styles.statusActive : styles.statusFrozen}>
-                        {user.isActive ? 'ACTIVE' : 'FROZEN'}
-                      </span>
-                    </td>
-                    <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
-                    <td className={styles.actions}>
-                      <button onClick={() => handleImpersonate(user.id)} title="Impersonate" disabled={busyUserId === user.id}>
-                        <LogIn size={16} />
-                      </button>
-                      <button onClick={() => handleForceLogout(user.id)} title="Force logout" disabled={busyUserId === user.id}>
-                        <LogOut size={16} />
-                      </button>
-                      <button onClick={() => handleFreezeToggle(user)} title={user.isActive ? 'Freeze' : 'Unfreeze'} disabled={busyUserId === user.id}>
-                        <ShieldAlert size={16} />
-                      </button>
-                      <button onClick={() => handleDeleteUser(user.id)} title="Delete user" disabled={busyUserId === user.id} className={styles.deleteBtn}>
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className={styles.importPanel}>
-            <textarea
-              value={csvContent}
-              onChange={(event) => setCsvContent(event.target.value)}
-              placeholder="Paste CSV here: firstName,lastName,email,role"
-              rows={5}
-            />
-            {importResult && (
-              <div className={styles.importResult}>
-                <strong>{importResult.createdCount} users imported.</strong>
-                {!!importResult.skippedRows?.length && <p>Skipped: {importResult.skippedRows.join(' | ')}</p>}
+            <div className={styles.section}>
+              <h2>System Audit Logs</h2>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>User ID</th>
+                      <th>Action</th>
+                      <th>Target</th>
+                      <th>IP Address</th>
+                      <th>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log) => (
+                      <tr key={log.id}>
+                        <td>{log.userId ?? '-'}</td>
+                        <td>{log.action}</td>
+                        <td>{log.targetId || '-'}</td>
+                        <td>{log.ipAddress || '-'}</td>
+                        <td>{log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
 
-        <div className={styles.section}>
-          <h2>Course Moderation</h2>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Course Title</th>
-                  <th>Instructor</th>
-                  <th>Price</th>
-                  <th>Difficulty</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {courses.map((course) => (
-                  <tr key={course.id}>
-                    <td>{course.title}</td>
-                    <td>{course.instructor ? `${course.instructor.firstName} ${course.instructor.lastName}` : 'System'}</td>
-                    <td>₹{(course.price || 0).toLocaleString('en-IN')}</td>
-                    <td><span className="badge">{course.difficulty}</span></td>
-                    <td>
-                      <span className={`${styles.statusPill} ${styles[course.status.toLowerCase()]}`}>
-                        {course.status}
-                      </span>
-                    </td>
-                    <td className={styles.actions}>
-                      {course.status === 'PENDING' && (
-                        <>
-                          <button onClick={() => handleUpdateCourseStatus(course.id, 'APPROVED')} title="Approve" className={styles.approveBtn}>
-                            <CheckCircle2 size={16} />
-                          </button>
-                          <button onClick={() => handleUpdateCourseStatus(course.id, 'REJECTED')} title="Reject" className={styles.rejectBtn}>
-                            <XCircle size={16} />
-                          </button>
-                        </>
-                      )}
-                      <button onClick={() => handleDeleteCourse(course.id)} title="Delete course" className={styles.deleteBtn}>
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {activeTab === 'users' && (
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2>User Management</h2>
+              <button className="btn-primary" onClick={handleImport}>Import Users</button>
+            </div>
 
-        <div className={styles.section}>
-          <h2>System Audit Logs</h2>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>User ID</th>
-                  <th>Action</th>
-                  <th>Target</th>
-                  <th>IP Address</th>
-                  <th>Timestamp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log) => (
-                  <tr key={log.id}>
-                    <td>{log.userId ?? '-'}</td>
-                    <td>{log.action}</td>
-                    <td>{log.targetId || '-'}</td>
-                    <td>{log.ipAddress || '-'}</td>
-                    <td>{log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'}</td>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.id}>
+                      <td>{`${user.firstName} ${user.lastName}`.trim()}</td>
+                      <td>{user.email}</td>
+                      <td>
+                        <select
+                          className={styles.roleSelect}
+                          value={user.role}
+                          onChange={(event) => handleRoleChange(user.id, event.target.value)}
+                          disabled={busyUserId === user.id}
+                        >
+                          {roleOptions.map((role) => (
+                            <option key={role} value={role}>{role}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <span className={user.isActive ? styles.statusActive : styles.statusFrozen}>
+                          {user.isActive ? 'ACTIVE' : 'FROZEN'}
+                        </span>
+                      </td>
+                      <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
+                      <td className={styles.actions}>
+                        <button onClick={() => handleImpersonate(user.id)} title="Impersonate" disabled={busyUserId === user.id}>
+                          <LogIn size={16} />
+                        </button>
+                        <button onClick={() => handleForceLogout(user.id)} title="Force logout" disabled={busyUserId === user.id}>
+                          <LogOut size={16} />
+                        </button>
+                        <button onClick={() => handleFreezeToggle(user)} title={user.isActive ? 'Freeze' : 'Unfreeze'} disabled={busyUserId === user.id}>
+                          <ShieldAlert size={16} />
+                        </button>
+                        <button onClick={() => handleDeleteUser(user.id)} title="Delete user" disabled={busyUserId === user.id} className={styles.deleteBtn}>
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className={styles.importPanel}>
+              <textarea
+                value={csvContent}
+                onChange={(event) => setCsvContent(event.target.value)}
+                placeholder="Paste CSV here: firstName,lastName,email,role"
+                rows={5}
+              />
+              {importResult && (
+                <div className={styles.importResult}>
+                  <strong>{importResult.createdCount} users imported.</strong>
+                  {!!importResult.skippedRows?.length && <p>Skipped: {importResult.skippedRows.join(' | ')}</p>}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'courses' && (
+          <div className={styles.section}>
+            <h2>Course Moderation</h2>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Course Title</th>
+                    <th>Instructor</th>
+                    <th>Price</th>
+                    <th>Difficulty</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courses.map((course) => (
+                    <tr key={course.id}>
+                      <td>{course.title}</td>
+                      <td>{course.instructor ? `${course.instructor.firstName} ${course.instructor.lastName}` : 'System'}</td>
+                      <td>₹{(course.price || 0).toLocaleString('en-IN')}</td>
+                      <td><span className="badge">{course.difficulty}</span></td>
+                      <td>
+                        <span className={`${styles.statusPill} ${styles[course.status.toLowerCase()]}`}>
+                          {course.status}
+                        </span>
+                      </td>
+                      <td className={styles.actions}>
+                        {course.status === 'PENDING' && (
+                          <>
+                            <button onClick={() => handleUpdateCourseStatus(course.id, 'APPROVED')} title="Approve" className={styles.approveBtn}>
+                              <CheckCircle2 size={16} />
+                            </button>
+                            <button onClick={() => handleUpdateCourseStatus(course.id, 'REJECTED')} title="Reject" className={styles.rejectBtn}>
+                              <XCircle size={16} />
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => handleDeleteCourse(course.id)} title="Delete course" className={styles.deleteBtn}>
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className={styles.section}>
+            <h2>Platform Settings</h2>
+            <p className={styles.subtitle}>Configure global platform behavior and appearance.</p>
+            
+            <form onSubmit={handleUpdateSettings} className={`glass-panel ${styles.settingsForm}`}>
+              <div className={styles.formGroup}>
+                <label>Site Name</label>
+                <input 
+                  type="text" 
+                  value={settings.siteName} 
+                  onChange={(e) => setSettings({...settings, siteName: e.target.value})} 
+                  placeholder="e.g. EduRev"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Maintenance Mode</label>
+                <select 
+                  value={settings.maintenanceMode} 
+                  onChange={(e) => setSettings({...settings, maintenanceMode: e.target.value})}
+                >
+                  <option value="false">Disabled (Site Live)</option>
+                  <option value="true">Enabled (Under Maintenance)</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Primary Brand Color</label>
+                <div className={styles.colorInputWrapper}>
+                  <input 
+                    type="color" 
+                    value={settings.primaryColor} 
+                    onChange={(e) => setSettings({...settings, primaryColor: e.target.value})} 
+                  />
+                  <span>{settings.primaryColor}</span>
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary">Save Platform Changes</button>
+            </form>
+          </div>
+        )}
 
         {loading && <p className={styles.subtitle}>Loading admin data...</p>}
       </div>
