@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -24,9 +24,13 @@ public class AiChatController {
     private com.edtech.backend.repository.AiChatMessageRepository aiChatMessageRepository;
 
     @GetMapping("/history")
-    public ResponseEntity<List<com.edtech.backend.model.AiChatMessage>> getChatHistory(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<List<Map<String, Object>>> getChatHistory(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
-        return ResponseEntity.ok(aiChatMessageRepository.findByUserOrderByCreatedAtAsc(user));
+        List<Map<String, Object>> history = aiChatMessageRepository.findByUserOrderByCreatedAtAsc(user)
+                .stream()
+                .map(this::toMessageDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(history);
     }
 
     @PostMapping("/chat")
@@ -36,19 +40,28 @@ public class AiChatController {
     ) {
         String message = request.get("message");
         String context = request.get("context");
+
+        if (message == null || message.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Message is required."));
+        }
+
+        String normalizedMessage = message.trim();
+        if (normalizedMessage.length() > 1000) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Message must be 1000 characters or fewer."));
+        }
         
         User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
 
         // 1. Save user message
         com.edtech.backend.model.AiChatMessage userMsg = new com.edtech.backend.model.AiChatMessage();
         userMsg.setUser(user);
-        userMsg.setContent(message);
+        userMsg.setContent(normalizedMessage);
         userMsg.setFromUser(true);
         userMsg.setContext(context);
         aiChatMessageRepository.save(userMsg);
         
         // 2. Generate response
-        String response = generateSmartResponse(message, context, user.getFirstName());
+        String response = generateSmartResponse(normalizedMessage, context, user);
 
         // 3. Save bot response
         com.edtech.backend.model.AiChatMessage botMsg = new com.edtech.backend.model.AiChatMessage();
@@ -66,28 +79,48 @@ public class AiChatController {
         return ResponseEntity.ok(result);
     }
 
-    private String generateSmartResponse(String message, String context, String userName) {
-        message = message.toLowerCase();
+    private Map<String, Object> toMessageDto(com.edtech.backend.model.AiChatMessage message) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("id", message.getId());
+        dto.put("content", message.getContent());
+        dto.put("fromUser", message.isFromUser());
+        dto.put("context", message.getContext());
+        dto.put("createdAt", message.getCreatedAt());
+        return dto;
+    }
+
+    private String generateSmartResponse(String message, String context, User user) {
+        String normalized = message.toLowerCase();
+        String firstName = user.getFirstName() == null ? "there" : user.getFirstName();
+        String role = user.getRole() == null ? "STUDENT" : user.getRole().name();
         
-        if (message.contains("hello") || message.contains("hi")) {
-            return "Hi " + userName + "! I'm EduBot, your personal learning assistant. How can I help you master your current course today?";
+        if (normalized.contains("hello") || normalized.contains("hi")) {
+            return "Hi " + firstName + "! I'm EduBot. I can help with learning plans, course questions, quiz preparation, live-session planning, and role-specific platform tasks.";
         }
         
-        if (message.contains("summarize") || message.contains("summary")) {
+        if (normalized.contains("summarize") || normalized.contains("summary")) {
             if (context != null && !context.isEmpty()) {
-                return "Based on your current lesson, the key takeaways are: \n1. Fundamental concepts of the topic.\n2. Best practices for implementation.\n3. Common pitfalls to avoid.\n\nWould you like me to dive deeper into any of these points?";
+                return "For " + context + ", focus your summary on three parts: the core concept, the practical workflow, and the common mistakes. If you paste lesson text, I can turn it into a tighter study note.";
             }
             return "I'd be happy to summarize! Could you please select a lesson first so I have the right context?";
         }
         
-        if (message.contains("help") || message.contains("explain")) {
-            return "Of course! I'm scanning the lesson content for '" + (context != null ? context : "your course") + "'. \n\nTypically, this area involves understanding core architecture and logic flow. Is there a specific line of code or concept that's confusing?";
+        if (normalized.contains("help") || normalized.contains("explain")) {
+            return "Start with the smallest unclear term, then connect it to an example. In " + (context != null ? context : "your current page") + ", tell me the exact concept or question and I will break it into steps.";
         }
 
-        if (message.contains("quiz")) {
-            return "Feeling ready for the quiz? Remember to review the diagrams in the lesson body first. They usually contain the trickiest answers!";
+        if (normalized.contains("quiz")) {
+            return "For quiz prep, make a two-column review: facts you can recall instantly and topics that still need examples. Practice the weak column first, then retry under a short timer.";
         }
 
-        return "That's a great question, " + userName + ". In the context of " + (context != null ? context : "Computer Science") + ", this often relates to system efficiency and scalability. Should I explain the theory behind it or show you a code example?";
+        if ("INSTRUCTOR".equals(role)) {
+            return "As an instructor, a practical next step is to turn this into a short objective, one example, one checkpoint question, and one follow-up activity. I can draft that structure if you share the topic.";
+        }
+
+        if ("ADMIN".equals(role)) {
+            return "From an admin view, check the affected users, course state, recent audit activity, and any notification impact. I can help convert this into an operations checklist.";
+        }
+
+        return "Good question, " + firstName + ". In " + (context != null ? context : "your course") + ", the best approach is to connect the idea to a concrete example, test yourself once, then revisit any missed step.";
     }
 }

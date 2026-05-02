@@ -1,0 +1,224 @@
+.home {
+  padding-bottom: var(--space-xl);
+}
+
+.hero {
+  padding: 2rem 0;
+}
+
+.trustBar {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.trustLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.statsSection {
+  padding: 6rem 0;
+  background: var(--color-bg-alt);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  text-align: center;
+}
+
+.statCard h3 {
+  font-size: 3rem;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.statCard p {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.features {
+  padding: 8rem 0;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 4rem;
+}
+
+.featureCard {
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.featureCard:hover {
+  transform: translateY(-10px);
+  border-color: var(--color-primary);
+}
+
+.iconBox {
+  width: 56px;
+  height: 56px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.featureCard h3 {
+  font-size: 1.5rem;
+}
+
+.featureCard p {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+.cta {
+  padding: 6rem 0;
+}
+
+.ctaContent {
+  padding: 5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4rem;
+  background: linear-gradient(135deg, var(--color-primary), #6366f1);
+  color: white;
+  border: none;
+}
+
+.ctaText h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.ctaText p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.ctaBtns {
+  display: flex;
+  gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+.contact {
+  padding: 8rem 0;
+}
+
+.contactGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 6rem;
+  align-items: center;
+}
+
+.contactInfo h1 {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.contactInfo p {
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  margin-bottom: 3rem;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.infoItem svg {
+  color: var(--color-primary);
+}
+
+.contactForm {
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.inputGroup input,
+.inputGroup textarea,
+.inputGroup select {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.inputGroup input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+@media (max-width: 1024px) {
+  .ctaContent {
+    flex-direction: column;
+    text-align: center;
+    padding: 3rem;
+    gap: 2rem;
+  }
+  
+  .contactGrid {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  .ctaText h2 {
+    font-size: 2rem;
+  }
+}

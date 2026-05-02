@@ -1,4 +1,4 @@
-const Marquee = ({ items }) => {
+const Marquee = ({ items = [] }) => {
   return (
     <div className="marquee">
       <div className="marquee-content">

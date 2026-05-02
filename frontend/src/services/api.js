@@ -114,6 +114,7 @@ export const analyticsApi = {
 export const instructorApi = {
   getMyCourses: () => api.get('/api/instructor/courses'),
   getCourseStudents: (courseId) => api.get(`/api/instructor/courses/${courseId}/students`),
+  getAllMyStudents: () => api.get('/api/instructor/students'),
   getEarnings: () => api.get('/api/instructor/earnings'),
   getAnalytics: () => api.get('/api/instructor/analytics'),
 };

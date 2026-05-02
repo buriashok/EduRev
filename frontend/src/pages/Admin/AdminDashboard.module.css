@@ -1,102 +1,149 @@
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 0;
+  animation: fadeIn 0.5s ease;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.header h1 {
+  font-size: 2.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .subtitle {
   color: var(--color-text-muted);
-  margin-top: 0.4rem;
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-}
-
-.statusPill {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
+.importButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-bg-alt);
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.approveBtn:hover {
-  color: #10b981 !important;
-  border-color: #10b981 !important;
-  background: rgba(16, 185, 129, 0.1) !important;
-}
-
-.rejectBtn:hover {
-  color: #f59e0b !important;
-  border-color: #f59e0b !important;
-  background: rgba(245, 158, 11, 0.1) !important;
-}
-
-.stats .glass-card {
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.stats h3 {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-.stats p {
-  font-size: 2rem;
-  font-weight: 800;
+.importButton:hover {
+  background: var(--color-primary-light);
   color: var(--color-primary);
 }
 
-.section {
+.tabNav {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2.5rem;
+}
+
+.tabNav button {
+  padding: 1rem 0.5rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tabNav button:hover {
+  color: var(--color-primary);
+}
+
+.tabNav .activeTab {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* Overview Styles */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
   margin-bottom: 3rem;
 }
 
+.statCard {
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.statInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statInfo h3 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.trend {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.healthStatus {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pulse {
+  width: 12px;
+  height: 12px;
+  background: var(--color-success);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.overviewMain {
+  display: grid;
+  gap: 2rem;
+}
+
+.logsSection {
+  padding: 0;
+  overflow: hidden;
+}
+
 .sectionHeader {
+  padding: 1.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-}
-
-.section h2 {
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .tableWrapper {
-  background: #fff;
-  border-radius: 1rem;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
+  overflow-x: auto;
 }
 
 .table {
@@ -104,197 +151,62 @@
   border-collapse: collapse;
 }
 
-.table th, .table td {
-  padding: 1rem 1.5rem;
+.table th {
+  padding: 1.25rem 2rem;
   text-align: left;
+  background: var(--color-bg-alt);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.table td {
+  padding: 1.25rem 2rem;
   border-bottom: 1px solid var(--color-border);
 }
 
-.table th {
-  background-color: var(--color-bg-alt);
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
-
-.roleBadge {
-  background-color: var(--color-primary-light);
+.table td strong {
   color: var(--color-primary);
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
 }
 
-.statusActive {
-  color: #10b981;
-  font-weight: 700;
+.table td code {
+  background: var(--color-bg-alt);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
 }
 
-.statusFrozen {
-  color: var(--color-accent);
-  font-weight: 700;
+/* User Management Specifics within Dashboard if still there */
+.roleSelect {
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  font-weight: 600;
 }
+
+.statusActive { color: var(--color-success); font-weight: 800; }
+.statusFrozen { color: var(--color-error); font-weight: 800; }
 
 .actions {
   display: flex;
-  gap: 0.5rem;
-}
-
-.actions button {
-  background: none;
-  border: 1px solid var(--color-border);
-  padding: 0.4rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.actions button:hover {
-  background: var(--color-bg-alt);
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.deleteBtn:hover {
-  color: #ff4d4d !important;
-  border-color: #ff4d4d !important;
-  background: rgba(255, 77, 77, 0.1) !important;
-}
-
-.roleSelect {
-  min-width: 140px;
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #fff;
-}
-
-.notice {
-  margin-bottom: 1rem;
-  padding: 0.85rem 1rem;
-  border-radius: 0.8rem;
-  border: 1px solid var(--color-border);
-  background: #fffaf0;
-}
-
-.importButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  background: #fff;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.importPanel {
-  margin-top: 1rem;
-  display: grid;
   gap: 0.75rem;
 }
 
-.importPanel textarea {
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  padding: 0.9rem 1rem;
-  resize: vertical;
-  min-height: 120px;
-}
-
-.importResult {
-  padding: 0.85rem 1rem;
-  border-radius: 0.75rem;
-  background: #f8fafc;
-  border: 1px solid var(--color-border);
-}
-
-@media (max-width: 900px) {
-  .stats {
-    grid-template-columns: 1fr;
-  }
-
-  .header,
-  .sectionHeader {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .tableWrapper {
-    overflow-x: auto;
-  }
-}
-
-.tabNav {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 1rem;
-}
-
-.tabNav button {
-  background: none;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
+.actions button {
   color: var(--color-text-muted);
-  cursor: pointer;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
+  transition: color 0.2s;
 }
 
-.tabNav button:hover {
-  background: var(--color-bg-alt);
-  color: var(--color-text);
+.actions button:hover {
+  color: var(--color-primary);
 }
 
-.tabNav button.activeTab {
-  background: var(--color-primary);
-  color: #fff;
+.deleteBtn:hover {
+  color: var(--color-error) !important;
 }
 
-.settingsForm {
-  max-width: 600px;
-  margin-top: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.formGroup label {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.formGroup input[type="text"],
-.formGroup select {
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border);
-  background: #fff;
-}
-
-.colorInputWrapper {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.colorInputWrapper input[type="color"] {
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: none;
-  cursor: pointer;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

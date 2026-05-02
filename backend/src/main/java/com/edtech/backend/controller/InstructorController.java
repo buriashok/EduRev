@@ -107,4 +107,34 @@ public class InstructorController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/students")
+    public ResponseEntity<List<Map<String, Object>>> getMyStudents(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        List<Payment> payments = paymentRepository.findAll().stream()
+                .filter(p -> p.getCourse().getInstructor().getId().equals(userPrincipal.getId()))
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> students = payments.stream()
+                .collect(Collectors.groupingBy(Payment::getUser))
+                .entrySet().stream()
+                .map(entry -> {
+                    User student = entry.getKey();
+                    List<String> titles = entry.getValue().stream()
+                            .map(p -> p.getCourse().getTitle())
+                            .collect(Collectors.toList());
+                    
+                    Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", student.getId());
+                    map.put("firstName", student.getFirstName());
+                    map.put("lastName", student.getLastName());
+                    map.put("email", student.getEmail());
+                    map.put("createdAt", student.getCreatedAt());
+                    map.put("lastLoginAt", student.getLastLoginAt());
+                    map.put("enrolledCourseTitles", titles);
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(students);
+    }
 }

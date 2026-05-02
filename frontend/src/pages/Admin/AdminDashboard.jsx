@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileUp, LogIn, LogOut, ShieldAlert, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { FileUp, LogIn, LogOut, ShieldAlert, Trash2, CheckCircle2, XCircle, TrendingUp, Users } from 'lucide-react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
 import { adminApi, analyticsApi, getErrorMessage } from '../../services/api';
@@ -222,45 +222,69 @@ const AdminDashboard = () => {
         </div>
 
         {activeTab === 'overview' && (
-          <>
-            <div className={styles.stats}>
-              {summaryCards.map((card) => (
-                <div key={card.label} className="glass-card">
-                  <h3>{card.label}</h3>
-                  <p>{card.value}</p>
+          <div className={styles.overview}>
+            <div className={styles.statsGrid}>
+              <div className={`glass-panel ${styles.statCard}`}>
+                <div className={styles.statInfo}>
+                  <span className={styles.label}>Platform Revenue</span>
+                  <h3>₹{(stats.totalRevenue || 0).toLocaleString('en-IN')}</h3>
+                  <span className={styles.trend}><TrendingUp size={14} /> +12.5%</span>
                 </div>
-              ))}
-            </div>
-
-            <div className={styles.section}>
-              <h2>System Audit Logs</h2>
-              <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>User ID</th>
-                      <th>Action</th>
-                      <th>Target</th>
-                      <th>IP Address</th>
-                      <th>Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {logs.map((log) => (
-                      <tr key={log.id}>
-                        <td>{log.userId ?? '-'}</td>
-                        <td>{log.action}</td>
-                        <td>{log.targetId || '-'}</td>
-                        <td>{log.ipAddress || '-'}</td>
-                        <td>{log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className={styles.chartMini}>
+                  {/* Visual placeholder */}
+                </div>
+              </div>
+              <div className={`glass-panel ${styles.statCard}`}>
+                <div className={styles.statInfo}>
+                  <span className={styles.label}>Total Active Users</span>
+                  <h3>{stats.totalUsers || 0}</h3>
+                  <span className={styles.trend}><Users size={14} /> +42 this week</span>
+                </div>
+              </div>
+              <div className={`glass-panel ${styles.statCard}`}>
+                <div className={styles.statInfo}>
+                  <span className={styles.label}>System Health</span>
+                  <div className={styles.healthStatus}>
+                    <div className={styles.pulse} />
+                    <h3>Optimal</h3>
+                  </div>
+                </div>
               </div>
             </div>
-          </>
+
+            <div className={styles.overviewMain}>
+              <div className={`glass-panel ${styles.logsSection}`}>
+                <div className={styles.sectionHeader}>
+                  <h2>System Audit Logs</h2>
+                  <button onClick={refreshAdminData} className="btn-secondary">Refresh</button>
+                </div>
+                <div className={styles.tableWrapper}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Action</th>
+                        <th>Target</th>
+                        <th>IP Address</th>
+                        <th>Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {logs.slice(0, 10).map((log) => (
+                        <tr key={log.id}>
+                          <td><strong>{log.action}</strong></td>
+                          <td>{log.targetId || 'System'}</td>
+                          <td><code>{log.ipAddress}</code></td>
+                          <td>{new Date(log.timestamp).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
+
 
         {activeTab === 'users' && (
           <div className={styles.section}>

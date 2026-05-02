@@ -1,0 +1,326 @@
+.dashboardPage {
+  padding: 0;
+}
+
+.levelBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.25);
+}
+
+.levelLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.levelValue {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.xpWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.xpBar {
+  width: 240px;
+  height: 8px;
+  background: var(--color-bg-alt);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xpFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.xpText {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.roleTag {
+  background: var(--color-bg-alt);
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+/* Stats */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.statCard {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.statHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.statIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+/* Layout */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.titleWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.viewAll {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.courseStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.courseRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+}
+
+.courseMain {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.courseIcon {
+  color: var(--color-primary);
+  opacity: 0.6;
+}
+
+.courseInfo h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.courseMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.dot { opacity: 0.4; }
+
+.courseProgress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 3rem;
+  width: 180px;
+}
+
+.miniProgress {
+  flex: 1;
+  height: 6px;
+  background: var(--color-bg-alt);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.miniProgress .fill {
+  height: 100%;
+  background: var(--color-success);
+}
+
+.courseProgress span {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-success);
+}
+
+.sideContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.sideCard {
+  padding: 1.5rem;
+}
+
+.sideCard h3 {
+  font-size: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.achievementList, .workshopList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.achievementItem, .workshopItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.achIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.achInfo strong, .workshopInfo strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.achInfo span, .workshopInfo span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dateBox {
+  width: 48px;
+  height: 48px;
+  background: var(--color-bg-alt);
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.day { font-weight: 800; font-size: 1.1rem; }
+.month { font-size: 0.65rem; font-weight: 800; color: var(--color-text-muted); }
+
+.sideAction {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  transition: all 0.2s ease;
+}
+
+.sideAction:hover {
+  background: var(--color-bg-alt);
+  color: var(--color-primary);
+}
+
+.emptyState {
+  padding: 5rem 3rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emptyIcon {
+  color: var(--color-text-muted);
+  opacity: 0.2;
+}
+
+@media (max-width: 1200px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+  .sideContent {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .sideCard {
+    flex: 1;
+    min-width: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .courseRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .courseProgress {
+    width: 100%;
+    margin: 0;
+  }
+}
