@@ -181,6 +181,13 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + targetUserId));
         sessionRepository.deleteByUser(user);
         auditLogService.log(adminUserId, "FORCE_LOGOUT", String.valueOf(targetUserId), "All active sessions revoked");
+        notificationService.createNotification(
+                user,
+                "Sessions Revoked",
+                "An administrator signed out all active sessions for your account.",
+                NotificationType.SECURITY,
+                "/settings/sessions"
+        );
     }
 
     public Map<String, String> impersonateUser(Long adminUserId, Long targetUserId) {
@@ -204,6 +211,13 @@ public class UserService {
         sessionRepository.save(session);
 
         auditLogService.log(adminUserId, "IMPERSONATE_USER", String.valueOf(targetUserId), "Admin impersonation issued");
+        notificationService.createNotification(
+                user,
+                "Admin Support Session Started",
+                "An administrator started a temporary support session for your account.",
+                NotificationType.SECURITY,
+                "/settings/sessions"
+        );
 
         Map<String, String> response = new LinkedHashMap<>();
         response.put("accessToken", accessToken);

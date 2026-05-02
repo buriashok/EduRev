@@ -7,10 +7,8 @@ import {
   MessageSquare, 
   Video, 
   Settings, 
-  ShieldAlert,
-  BarChart3,
   PlusCircle,
-  History
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Sidebar.module.css';
@@ -28,6 +26,7 @@ const Sidebar = () => {
           { label: 'Live Classes', icon: <Video size={20} />, path: '/live-classes' },
           { label: 'Leaderboard', icon: <Trophy size={20} />, path: '/leaderboard' },
           { label: 'Community', icon: <MessageSquare size={20} />, path: '/forum' },
+          { label: 'EDU-Revolution', icon: <GraduationCap size={20} />, path: '/edu-revolution' },
         ];
       case 'INSTRUCTOR':
         return [
@@ -35,6 +34,7 @@ const Sidebar = () => {
           { label: 'Create Course', icon: <PlusCircle size={20} />, path: '/instructor/create-course' },
           { label: 'Live Sessions', icon: <Video size={20} />, path: '/instructor/live-sessions' },
           { label: 'Student Roster', icon: <Users size={20} />, path: '/instructor/students' },
+          { label: 'EDU-Revolution', icon: <GraduationCap size={20} />, path: '/edu-revolution' },
           { label: 'Settings', icon: <Settings size={20} />, path: '/settings' },
         ];
       case 'ADMIN':
@@ -43,6 +43,7 @@ const Sidebar = () => {
           { label: 'User Management', icon: <Users size={20} />, path: '/admin/users' },
           { label: 'Course Catalog', icon: <BookOpen size={20} />, path: '/courses' },
           { label: 'Platform Settings', icon: <Settings size={20} />, path: '/settings' },
+          { label: 'EDU Requests', icon: <GraduationCap size={20} />, path: '/edu-revolution' },
         ];
       default:
         return [];

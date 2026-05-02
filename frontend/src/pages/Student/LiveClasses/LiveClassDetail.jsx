@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Users, Clock3, CalendarDays, ExternalLink, PlayCircle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Users, Clock3, CalendarDays, ExternalLink, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { getErrorMessage, liveClassApi } from '../../../services/api';
 import DashboardLayout from '../../../components/Layout/DashboardLayout';
 import styles from './LiveClassDetail.module.css';
@@ -18,7 +18,7 @@ const LiveClassDetail = () => {
     const fetchData = async () => {
       try {
         const [classRes, regRes] = await Promise.all([
-          liveClassApi.join(id), // Join also returns metadata
+          liveClassApi.getById(id),
           liveClassApi.getRegistrations(id)
         ]);
         setLiveClass(classRes.data);
@@ -70,11 +70,11 @@ const LiveClassDetail = () => {
               <div className={styles.infoRow}>
                 <div className={styles.infoItem}>
                   <CalendarDays size={18} />
-                  <span>{new Date(liveClass?.startsAt).toLocaleDateString()}</span>
+                  <span>{new Date(liveClass?.startTime).toLocaleDateString()}</span>
                 </div>
                 <div className={styles.infoItem}>
                   <Clock3 size={18} />
-                  <span>{new Date(liveClass?.startsAt).toLocaleTimeString()}</span>
+                  <span>{new Date(liveClass?.startTime).toLocaleTimeString()}</span>
                 </div>
                 <div className={styles.infoItem}>
                   <Users size={18} />

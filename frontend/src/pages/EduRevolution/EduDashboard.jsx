@@ -1,40 +1,94 @@
 import { useState, useEffect } from 'react';
-import { FileText, Award, Users, Plus, QrCode } from 'lucide-react';
-import { eduApi } from '../../services/api';
+import { FileText, Award, Users, Plus, QrCode, CheckCircle2, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { eduApi, getErrorMessage } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import styles from './EduDashboard.module.css';
 
 const EduDashboard = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [message, setMessage] = useState('');
+  const [newRequest, setNewRequest] = useState({ type: 'DUTY_LEAVE', description: '' });
+
+  const fetchData = async () => {
+    try {
+      const requestCall = user?.role === 'ADMIN' ? eduApi.getAllRequests() : eduApi.getRequests();
+      const [reqRes, certRes] = await Promise.all([
+        requestCall,
+        eduApi.getCertificates()
+      ]);
+      setRequests(reqRes.data);
+      setCertificates(certRes.data);
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Failed to load EDU-Revolution data.'));
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [reqRes, certRes] = await Promise.all([
-          eduApi.getRequests(),
-          eduApi.getCertificates()
-        ]);
-        setRequests(reqRes.data);
-        setCertificates(certRes.data);
-      } catch (error) {
-        console.error('Failed to fetch Edu data:', error);
-      }
-    };
-    fetchData();
-  }, []);
+    if (user) fetchData();
+  }, [user]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      await eduApi.submitRequest(newRequest);
+      setNewRequest({ type: 'DUTY_LEAVE', description: '' });
+      setShowForm(false);
+      setMessage('Request submitted successfully.');
+      fetchData();
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Failed to submit request.'));
+    }
+  };
+
+  const handleStatus = async (id, status) => {
+    try {
+      await eduApi.updateRequestStatus(id, status);
+      fetchData();
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Failed to update request.'));
+    }
+  };
+
   return (
     <div className={`container ${styles.eduPage}`}>
       <h1 className={styles.title}>EDU-Revolution Dashboard</h1>
+      {message && <div className={styles.message}>{message}</div>}
       
       <div className={styles.grid}>
         <div className={`glass-panel ${styles.card}`}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
             <h2 style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-              <FileText style={{color: 'var(--color-primary)'}} /> My Requests
+              <FileText style={{color: 'var(--color-primary)'}} /> {user?.role === 'ADMIN' ? 'All Requests' : 'My Requests'}
             </h2>
-            <button className="btn-secondary" style={{padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
+            {user?.role !== 'ADMIN' && (
+            <button className="btn-secondary" onClick={() => setShowForm((open) => !open)} style={{padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
               <Plus size={16} /> New Request
             </button>
+            )}
           </div>
+
+          {showForm && (
+            <form className={styles.requestForm} onSubmit={handleSubmit}>
+              <select value={newRequest.type} onChange={(event) => setNewRequest({...newRequest, type: event.target.value})}>
+                <option value="DUTY_LEAVE">Duty Leave</option>
+                <option value="CREDIT_EARNING">Credit Earning</option>
+                <option value="REFERRAL">Referral</option>
+              </select>
+              <textarea
+                value={newRequest.description}
+                onChange={(event) => setNewRequest({...newRequest, description: event.target.value})}
+                placeholder="Describe your request"
+                required
+                rows={3}
+              />
+              <button className="btn-primary" type="submit">Submit Request</button>
+            </form>
+          )}
           
           <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
             {requests.length === 0 ? (
@@ -43,12 +97,23 @@ const EduDashboard = () => {
               requests.map(req => (
                 <div key={req.id} className={styles.requestItem}>
                   <div>
-                    <div style={{fontSize: '0.8rem', fontWeight: '700', color: 'var(--color-text-muted)'}}>{req.requestType}</div>
+                    <div style={{fontSize: '0.8rem', fontWeight: '700', color: 'var(--color-text-muted)'}}>{req.type}</div>
                     <div style={{fontSize: '0.95rem'}}>{req.description}</div>
+                    {user?.role === 'ADMIN' && req.user && (
+                      <div style={{fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>{req.user.firstName} {req.user.lastName} · {req.user.email}</div>
+                    )}
                   </div>
-                  <span className={`${styles.status} ${req.status === 'APPROVED' ? styles.approved : styles.pending}`}>
-                    {req.status}
-                  </span>
+                  <div className={styles.requestActions}>
+                    <span className={`${styles.status} ${req.status === 'APPROVED' ? styles.approved : req.status === 'REJECTED' ? styles.rejected : styles.pending}`}>
+                      {req.status}
+                    </span>
+                    {user?.role === 'ADMIN' && req.status === 'PENDING' && (
+                      <>
+                        <button title="Approve" onClick={() => handleStatus(req.id, 'APPROVED')}><CheckCircle2 size={16} /></button>
+                        <button title="Reject" onClick={() => handleStatus(req.id, 'REJECTED')}><XCircle size={16} /></button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))
             )}
@@ -66,18 +131,18 @@ const EduDashboard = () => {
             ) : (
               certificates.map(cert => (
                 <div key={cert.id} className={styles.certCard}>
-                  <div className={styles.qrPlaceholder}>
-                    {cert.qrCodeBase64 ? (
-                      <img src={`data:image/png;base64,${cert.qrCodeBase64}`} alt="QR" style={{width: '100%'}} />
+                    <div className={styles.qrPlaceholder}>
+                    {cert.qrCodePath ? (
+                      <img src={cert.qrCodePath} alt="QR" style={{width: '100%'}} />
                     ) : (
                       <QrCode size={40} color="#000" />
                     )}
                   </div>
                   <div style={{flex: 1}}>
-                    <div style={{fontWeight: '700'}}>{cert.courseName}</div>
-                    <div style={{fontSize: '0.85rem', color: 'var(--color-text-muted)'}}>Verified ID: {cert.certificateId}</div>
+                    <div style={{fontWeight: '700'}}>{cert.course?.title}</div>
+                    <div style={{fontSize: '0.85rem', color: 'var(--color-text-muted)'}}>Verified ID: {cert.uniqueId}</div>
                   </div>
-                  <button className="btn-primary" style={{padding: '0.4rem 0.8rem', fontSize: '0.85rem'}}>View</button>
+                  <button className="btn-primary" onClick={() => navigate(`/certificate/${cert.id}`)} style={{padding: '0.4rem 0.8rem', fontSize: '0.85rem'}}>View</button>
                 </div>
               ))
             )}

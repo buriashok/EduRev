@@ -40,6 +40,8 @@ public class LiveClass {
     @Column(nullable = false)
     private boolean isCompleted = false;
 
+    private LocalDateTime reminderSentAt;
+
     private int maxCapacity = 50;
 
     @ManyToMany
@@ -132,6 +134,14 @@ public class LiveClass {
         isCompleted = completed;
     }
 
+    public LocalDateTime getReminderSentAt() {
+        return reminderSentAt;
+    }
+
+    public void setReminderSentAt(LocalDateTime reminderSentAt) {
+        this.reminderSentAt = reminderSentAt;
+    }
+
     public int getMaxCapacity() {
         return maxCapacity;
     }
@@ -146,5 +156,10 @@ public class LiveClass {
 
     public void setRegisteredUsers(Set<User> registeredUsers) {
         this.registeredUsers = registeredUsers;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("currentRegistrations")
+    public int getCurrentRegistrations() {
+        return registeredUsers == null ? 0 : registeredUsers.size();
     }
 }

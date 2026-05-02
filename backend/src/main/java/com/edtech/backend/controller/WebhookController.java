@@ -51,8 +51,8 @@ public class WebhookController {
                 handlePaymentSuccess(paymentIntent);
                 break;
             case "payment_intent.payment_failed":
-                // Log failure or notify user
-                System.out.println("Payment failed for intent: " + event.getId());
+                PaymentIntent failedIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElseThrow();
+                paymentService.markPaymentFailed(failedIntent.getId());
                 break;
             default:
                 System.out.println("Unhandled event type: " + event.getType());
@@ -64,9 +64,13 @@ public class WebhookController {
     private void handlePaymentSuccess(PaymentIntent paymentIntent) {
         Map<String, String> metadata = paymentIntent.getMetadata();
         if (metadata != null && metadata.containsKey("userId") && metadata.containsKey("courseId")) {
-            Long userId = Long.parseLong(metadata.get("userId"));
-            Long courseId = Long.parseLong(metadata.get("courseId"));
-            paymentService.confirmEnrollment(userId, courseId, paymentIntent.getId());
+            try {
+                Long userId = Long.parseLong(metadata.get("userId"));
+                Long courseId = Long.parseLong(metadata.get("courseId"));
+                paymentService.confirmEnrollment(userId, courseId, paymentIntent.getId());
+            } catch (NumberFormatException ex) {
+                System.err.println("Invalid metadata in PaymentIntent: " + paymentIntent.getId());
+            }
         } else {
             System.err.println("Missing metadata in PaymentIntent: " + paymentIntent.getId());
         }

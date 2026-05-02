@@ -32,7 +32,7 @@ public class LiveClassReminderService {
         logger.info("Checking for upcoming live classes starting between {} and {}", now, soon);
 
         // Find classes starting in the next 30 minutes that aren't completed
-        List<LiveClass> upcoming = liveClassRepository.findByStartTimeBetween(now, soon);
+        List<LiveClass> upcoming = liveClassRepository.findByStartTimeBetweenAndReminderSentAtIsNull(now, soon);
 
         for (LiveClass lc : upcoming) {
             if (lc.isCompleted()) continue;
@@ -48,6 +48,8 @@ public class LiveClassReminderService {
                     "/live-classes"
                 );
             });
+            lc.setReminderSentAt(now);
+            liveClassRepository.save(lc);
         }
     }
 }

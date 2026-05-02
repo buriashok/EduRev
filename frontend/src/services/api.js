@@ -124,10 +124,14 @@ export const courseApi = {
   getById: (id) => api.get(`/api/courses/${id}`),
   create: (data) => api.post('/api/courses', data),
   getRecommendations: () => api.get('/api/courses/recommendations'),
+  getReviews: (courseId) => api.get(`/api/courses/${courseId}/reviews`),
+  submitReview: (courseId, data) => api.post(`/api/courses/${courseId}/reviews`, data),
 };
 
 export const liveClassApi = {
   getUpcoming: () => api.get('/api/live-classes/upcoming'),
+  getMine: () => api.get('/api/live-classes/mine'),
+  getById: (id) => api.get(`/api/live-classes/${id}`),
   register: (id) => api.post(`/api/live-classes/${id}/register`),
   getRegistrations: (id) => api.get(`/api/live-classes/${id}/registrations`),
   complete: (id, recordingUrl) => api.post(`/api/live-classes/${id}/complete`, { recordingUrl }),
@@ -147,12 +151,15 @@ export const discussionApi = {
 export const certificateApi = {
   getMyCertificates: () => api.get('/api/certificates/my'),
   getById: (id) => api.get(`/api/certificates/${id}`),
+  verify: (uniqueId) => api.get(`/api/certificates/verify/${uniqueId}`),
 };
 
 export const eduApi = {
   getRequests: () => api.get('/api/edu-revolution/requests'),
   getCertificates: () => api.get('/api/edu-revolution/certificates'),
   submitRequest: (data) => api.post('/api/edu-revolution/requests', data),
+  getAllRequests: () => api.get('/api/edu-revolution/admin/requests'),
+  updateRequestStatus: (id, status) => api.patch(`/api/edu-revolution/admin/requests/${id}`, { status }),
 };
 
 export const aiApi = {

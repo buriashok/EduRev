@@ -3,6 +3,7 @@ package com.edtech.backend.controller;
 import com.edtech.backend.model.*;
 import com.edtech.backend.repository.*;
 import com.edtech.backend.security.UserPrincipal;
+import com.edtech.backend.service.CertificateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +27,9 @@ public class CourseProgressController {
 
     @Autowired
     private LessonRepository lessonRepository;
+
+    @Autowired
+    private CertificateService certificateService;
 
     @GetMapping("/{courseId}")
     public ResponseEntity<?> getProgress(
@@ -59,21 +63,43 @@ public class CourseProgressController {
         Course course = courseRepository.findById(courseId).orElseThrow();
         Lesson lesson = lessonRepository.findById(lessonId).orElseThrow();
 
+        if (lesson.getCourse() == null || !lesson.getCourse().getId().equals(course.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lesson does not belong to this course"));
+        }
+
+        if (!user.getEnrolledCourses().contains(course)) {
+            return ResponseEntity.status(403).body(Map.of("message", "Enroll in this course before tracking progress"));
+        }
+
         CourseProgress progress = progressRepository.findByUserAndCourse(user, course)
                 .orElseThrow(() -> new RuntimeException("Progress not initialized for this course"));
 
-        progress.getCompletedLessons().add(lesson);
+        boolean newlyCompleted = progress.getCompletedLessons().add(lesson);
         progressRepository.save(progress);
 
-        // Award XP
-        awardXp(user, 50);
-        userRepository.save(user);
+        int xpGained = newlyCompleted ? 50 : 0;
+        if (newlyCompleted) {
+            awardXp(user, xpGained);
+            userRepository.save(user);
+        }
+
+        Object certificateId = null;
+        if (!course.getLessons().isEmpty() && progress.getCompletedLessons().size() >= course.getLessons().size()) {
+            try {
+                Certificate certificate = certificateService.issueCertificate(user, course);
+                certificateId = certificate.getId();
+            } catch (Exception ex) {
+                throw new RuntimeException("Lesson completed, but certificate generation failed");
+            }
+        }
 
         return ResponseEntity.ok(Map.of(
             "message", "Lesson marked as complete",
-            "xpGained", 50,
+            "xpGained", xpGained,
             "newTotalXp", user.getXp(),
-            "newLevel", user.getLevel()
+            "newLevel", user.getLevel(),
+            "courseCompleted", certificateId != null,
+            "certificateId", certificateId == null ? "" : certificateId
         ));
     }
 

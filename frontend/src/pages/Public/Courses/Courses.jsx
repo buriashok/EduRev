@@ -130,7 +130,7 @@ const Courses = () => {
                     <span className={styles.diffBadge}>{course.difficulty}</span>
                     <div className={styles.rating}>
                       <Star size={12} fill="currentColor" />
-                      <span>4.9</span>
+                      <span>{Number(course.averageRating || 0).toFixed(1)}</span>
                     </div>
                   </div>
 
@@ -145,7 +145,7 @@ const Courses = () => {
                       </div>
                       <div className={styles.metaItem}>
                         <BarChart3 size={14} />
-                        <span>{course.difficulty}</span>
+                        <span>{course.reviewCount || 0} reviews</span>
                       </div>
                     </div>
 

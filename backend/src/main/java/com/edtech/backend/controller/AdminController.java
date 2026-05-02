@@ -2,11 +2,10 @@ package com.edtech.backend.controller;
 
 import com.edtech.backend.model.User;
 import com.edtech.backend.repository.UserRepository;
-import com.edtech.backend.security.UserPrincipal;
+import com.edtech.backend.service.PlatformSettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,6 +19,9 @@ public class AdminController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PlatformSettingsService platformSettingsService;
 
     // 1. User Management Extension
     @GetMapping("/users")
@@ -37,13 +39,12 @@ public class AdminController {
 
     @GetMapping("/settings")
     public Map<String, String> getSettings() {
-        return PublicSettingsController.platformSettings;
+        return platformSettingsService.getSettings();
     }
 
     @PostMapping("/settings")
     public Map<String, String> updateSettings(@RequestBody Map<String, String> newSettings) {
-        PublicSettingsController.platformSettings.putAll(newSettings);
-        return PublicSettingsController.platformSettings;
+        return platformSettingsService.updateSettings(newSettings);
     }
 
     // 3. System Stats

@@ -28,6 +28,21 @@ const Certificate = () => {
     window.print();
   };
 
+  const verificationUrl = certificate ? `${window.location.origin}/verify/${certificate.uniqueId}` : '';
+
+  const handleShare = async () => {
+    if (!verificationUrl) return;
+    if (navigator.share) {
+      await navigator.share({
+        title: 'EduRev Certificate',
+        text: `Verify ${certificate.user.firstName} ${certificate.user.lastName}'s EduRev certificate`,
+        url: verificationUrl,
+      });
+      return;
+    }
+    await navigator.clipboard.writeText(verificationUrl);
+  };
+
   if (loading) return (
     <div className="flex-center" style={{ minHeight: '80vh' }}>
       <Loader2 className="animate-spin" size={48} color="var(--color-primary)" />
@@ -51,7 +66,7 @@ const Certificate = () => {
           <button className="btn-secondary" onClick={handlePrint}>
             <Download size={18} /> Download PDF
           </button>
-          <button className="btn-primary">
+          <button className="btn-primary" onClick={handleShare}>
             <Share2 size={18} /> Share
           </button>
         </div>
@@ -96,7 +111,11 @@ const Certificate = () => {
               </div>
 
               <div className={styles.seal}>
-                <ShieldCheck size={64} color="#d97706" />
+                {certificate.qrCodePath ? (
+                  <img src={certificate.qrCodePath} alt="Certificate verification QR code" className={styles.qrCode} />
+                ) : (
+                  <ShieldCheck size={64} color="#d97706" />
+                )}
                 <span>Verified</span>
               </div>
 
@@ -108,7 +127,7 @@ const Certificate = () => {
 
             <div className={styles.verify}>
               <span>Certificate ID: {certificate.uniqueId}</span>
-              <span>Verify at edurev.local/verify</span>
+              <span>Verify at {verificationUrl}</span>
             </div>
           </div>
         </div>

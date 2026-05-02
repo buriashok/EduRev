@@ -11,5 +11,7 @@ import java.util.List;
 public interface LiveClassRepository extends JpaRepository<LiveClass, Long> {
     List<LiveClass> findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime time);
     List<LiveClass> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+    List<LiveClass> findByInstructorIdOrderByStartTimeDesc(Long instructorId);
+    List<LiveClass> findByStartTimeBetweenAndReminderSentAtIsNull(LocalDateTime start, LocalDateTime end);
     List<LiveClass> findByCourseId(Long courseId);
 }

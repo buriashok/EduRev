@@ -23,6 +23,8 @@ import Leaderboard from './pages/Student/Leaderboard/Leaderboard';
 import { useAuth } from './context/AuthContext';
 import Maintenance from './pages/Shared/Maintenance/Maintenance';
 import Notifications from './pages/Shared/Notifications/Notifications';
+import VerifyCertificate from './pages/Public/VerifyCertificate/VerifyCertificate';
+import EduDashboard from './pages/EduRevolution/EduDashboard';
 import { adminApi } from './services/api';
 
 const RoleHome = () => {
@@ -81,6 +83,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify/:uniqueId" element={<VerifyCertificate />} />
         <Route path="/register" element={<Register />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/instructor/create-course" element={<RequireRole roles={['INSTRUCTOR', 'ADMIN']}><CreateCourse /></RequireRole>} />
@@ -96,6 +99,7 @@ function AppContent() {
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/settings/sessions" element={<RequireAuth><SessionManager /></RequireAuth>} />
         <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
+        <Route path="/edu-revolution" element={<RequireAuth><EduDashboard /></RequireAuth>} />
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/learn/:courseId" element={<RequireAuth><CourseView /></RequireAuth>} />
         <Route path="/certificate/:id" element={<RequireAuth><Certificate /></RequireAuth>} />

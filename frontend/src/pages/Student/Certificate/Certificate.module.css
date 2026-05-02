@@ -136,6 +136,12 @@
   align-items: center;
 }
 
+.qrCode {
+  width: 72px;
+  height: 72px;
+  border: 1px solid #e2e8f0;
+}
+
 .seal span {
   font-weight: 700;
   text-transform: uppercase;

@@ -2,6 +2,7 @@ package com.edtech.backend.service;
 
 import com.edtech.backend.model.Role;
 import com.edtech.backend.repository.CourseRepository;
+import com.edtech.backend.repository.CourseReviewRepository;
 import com.edtech.backend.repository.LiveClassRepository;
 import com.edtech.backend.repository.PaymentRepository;
 import com.edtech.backend.repository.SessionRepository;
@@ -30,6 +31,9 @@ public class AnalyticsService {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private CourseReviewRepository courseReviewRepository;
+
     public Map<String, Object> getAdminAnalytics() {
         Map<String, Object> stats = new HashMap<>();
         long totalUsers = userRepository.count();
@@ -39,9 +43,9 @@ public class AnalyticsService {
         long activeSessions = sessionRepository.countByIsActiveTrue();
         long frozenAccounts = Math.max(0, totalUsers - activeUsers);
         
-        java.math.BigDecimal totalRevenueCents = paymentRepository.sumTotalRevenue();
-        double totalRevenue = totalRevenueCents != null ? totalRevenueCents.doubleValue() / 100.0 : 0.0;
-        long totalEnrollments = paymentRepository.count();
+        java.math.BigDecimal totalRevenueValue = paymentRepository.sumTotalSucceededRevenue();
+        double totalRevenue = totalRevenueValue != null ? totalRevenueValue.doubleValue() : 0.0;
+        long totalEnrollments = paymentRepository.findByStatus("SUCCEEDED").size();
 
         stats.put("totalRevenue", totalRevenue);
         stats.put("totalEnrollments", totalEnrollments);
@@ -59,13 +63,14 @@ public class AnalyticsService {
         Map<String, Object> stats = new HashMap<>();
         long courses = courseRepository.findByInstructorId(instructorId).size();
         
-        java.math.BigDecimal instructorRevenueCents = paymentRepository.sumRevenueByInstructor(instructorId);
-        double totalRevenue = instructorRevenueCents != null ? instructorRevenueCents.doubleValue() / 100.0 : 0.0;
-        long enrolledStudents = paymentRepository.countEnrollmentsByInstructor(instructorId);
+        java.math.BigDecimal instructorRevenueValue = paymentRepository.sumSucceededRevenueByInstructor(instructorId);
+        double totalRevenue = instructorRevenueValue != null ? instructorRevenueValue.doubleValue() : 0.0;
+        long enrolledStudents = paymentRepository.countSucceededEnrollmentsByInstructor(instructorId);
 
         stats.put("courseRevenue", totalRevenue);
         stats.put("enrolledStudents", enrolledStudents);
-        stats.put("averageRating", 4.5); // Rating system can be implemented later
+        Double averageRating = courseReviewRepository.averageRatingByInstructorId(instructorId);
+        stats.put("averageRating", averageRating == null ? 0.0 : Math.round(averageRating * 10.0) / 10.0);
         stats.put("courseCount", courses);
         return stats;
     }

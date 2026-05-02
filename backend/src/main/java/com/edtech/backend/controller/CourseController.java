@@ -4,8 +4,10 @@ import com.edtech.backend.model.Course;
 import com.edtech.backend.model.CourseStatus;
 import com.edtech.backend.model.User;
 import com.edtech.backend.repository.CourseRepository;
+import com.edtech.backend.repository.CourseReviewRepository;
 import com.edtech.backend.repository.UserRepository;
 import com.edtech.backend.security.UserPrincipal;
+import com.edtech.backend.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,14 +27,20 @@ public class CourseController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private CourseReviewRepository courseReviewRepository;
+
     @GetMapping
     public List<Course> getAllCourses(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         // Admins can see all, others only APPROVED
         if (userPrincipal != null && userPrincipal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return courseRepository.findAll();
+            return withRatings(courseRepository.findAll());
         }
-        return courseRepository.findByStatus(CourseStatus.APPROVED);
+        return withRatings(courseRepository.findByStatus(CourseStatus.APPROVED));
     }
 
     @PatchMapping("/{id}/status")
@@ -44,7 +52,15 @@ public class CourseController {
         return courseRepository.findById(id).map(course -> {
             CourseStatus status = CourseStatus.valueOf(payload.get("status"));
             course.setStatus(status);
-            return ResponseEntity.ok(courseRepository.save(course));
+            Course saved = courseRepository.save(course);
+            notificationService.createNotification(
+                    saved.getInstructor(),
+                    "Course " + status.name().toLowerCase(),
+                    "Your course \"" + saved.getTitle() + "\" was marked " + status.name().toLowerCase() + ".",
+                    status == CourseStatus.APPROVED ? com.edtech.backend.model.NotificationType.SUCCESS : com.edtech.backend.model.NotificationType.WARNING,
+                    "/instructor/create-course"
+            );
+            return ResponseEntity.ok(withRating(saved));
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -52,7 +68,7 @@ public class CourseController {
     public List<Course> getRecommendations() {
         // Recommendations should only be from approved courses
         List<Course> all = courseRepository.findByStatus(CourseStatus.APPROVED);
-        return all.subList(0, Math.min(all.size(), 3));
+        return withRatings(all.subList(0, Math.min(all.size(), 3)));
     }
 
     @GetMapping("/{id}")
@@ -64,7 +80,7 @@ public class CourseController {
             boolean isInstructor = userPrincipal != null && course.getInstructor().getId().equals(userPrincipal.getId());
             
             if (course.getStatus() == CourseStatus.APPROVED || isAdmin || isInstructor) {
-                return ResponseEntity.ok(course);
+                return ResponseEntity.ok(withRating(course));
             }
             return ResponseEntity.status(403).<Course>build();
         }).orElse(ResponseEntity.notFound().build());
@@ -84,7 +100,30 @@ public class CourseController {
         if (course.getLessons() != null) {
             course.getLessons().forEach(lesson -> lesson.setCourse(course));
         }
-        return ResponseEntity.ok(courseRepository.save(course));
+        Course saved = courseRepository.save(course);
+        if (isAdmin) {
+            notificationService.createNotification(
+                    instructor,
+                    "Course Published",
+                    "Your course \"" + saved.getTitle() + "\" is now live.",
+                    com.edtech.backend.model.NotificationType.SUCCESS,
+                    "/learn/" + saved.getId()
+            );
+        } else {
+            notificationService.createNotification(
+                    instructor,
+                    "Course Submitted for Review",
+                    "Your course \"" + saved.getTitle() + "\" is pending admin approval.",
+                    com.edtech.backend.model.NotificationType.INFO,
+                    "/instructor/create-course"
+            );
+            notifyAdmins(
+                    "Course Review Needed",
+                    instructor.getFirstName() + " submitted \"" + saved.getTitle() + "\" for approval.",
+                    "/admin/dashboard"
+            );
+        }
+        return ResponseEntity.ok(withRating(saved));
     }
 
     @PutMapping("/{id}")
@@ -103,7 +142,15 @@ public class CourseController {
                     course.getLessons().add(lesson);
                 });
             }
-            return ResponseEntity.ok(courseRepository.save(course));
+            Course saved = courseRepository.save(course);
+            notificationService.createNotification(
+                    saved.getInstructor(),
+                    "Course Updated",
+                    "Changes to \"" + saved.getTitle() + "\" were saved.",
+                    com.edtech.backend.model.NotificationType.INFO,
+                    "/learn/" + saved.getId()
+            );
+            return ResponseEntity.ok(withRating(saved));
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -111,8 +158,42 @@ public class CourseController {
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteCourse(@PathVariable Long id) {
         return courseRepository.findById(id).map(course -> {
+            User instructor = course.getInstructor();
+            String title = course.getTitle();
             courseRepository.delete(course);
+            notificationService.createNotification(
+                    instructor,
+                    "Course Deleted",
+                    "The course \"" + title + "\" was removed from the platform.",
+                    com.edtech.backend.model.NotificationType.WARNING,
+                    "/courses"
+            );
             return ResponseEntity.ok().build();
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    private void notifyAdmins(String title, String message, String link) {
+        userRepository.findByRole(com.edtech.backend.model.Role.ADMIN).forEach(admin ->
+                notificationService.createNotification(
+                        admin,
+                        title,
+                        message,
+                        com.edtech.backend.model.NotificationType.INFO,
+                        link
+                )
+        );
+    }
+
+    private List<Course> withRatings(List<Course> courses) {
+        courses.forEach(this::withRating);
+        return courses;
+    }
+
+    private Course withRating(Course course) {
+        Double average = courseReviewRepository.averageRatingByCourseId(course.getId());
+        long count = courseReviewRepository.countByCourseId(course.getId());
+        course.setAverageRating(average == null ? 0.0 : Math.round(average * 10.0) / 10.0);
+        course.setReviewCount(count);
+        return course;
     }
 }

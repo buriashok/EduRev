@@ -26,7 +26,7 @@ public class Payment {
     @Column(nullable = false)
     private String currency = "USD";
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String stripePaymentIntentId;
 
     @Column(nullable = false)

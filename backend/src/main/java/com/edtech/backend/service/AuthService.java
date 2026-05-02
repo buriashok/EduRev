@@ -122,14 +122,20 @@ public class AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
 
+        boolean suspiciousLogin = isSuspiciousLogin(user, ipAddress, deviceInfo);
         String accessToken = tokenProvider.generateTokenFromUserId(user.getId());
         String refreshToken = createSession(user, ipAddress, deviceInfo, Boolean.TRUE.equals(loginRequest.getRememberMe()));
 
         logAction(user.getId(), "LOGIN", "SUCCESS", ipAddress);
 
-        notificationService.createNotification(user, "New Login Alert", 
-            "A new login was detected for your account from IP: " + ipAddress + " (" + deviceInfo + ").", 
-            NotificationType.SECURITY, null);
+        notificationService.createNotification(
+                user,
+                suspiciousLogin ? "Suspicious Login Alert" : "New Login Alert",
+                "A " + (suspiciousLogin ? "new IP or device" : "new login") + " was detected for your account from IP: "
+                        + ipAddress + " (" + deviceInfo + ").",
+                suspiciousLogin ? NotificationType.WARNING : NotificationType.SECURITY,
+                "/settings/sessions"
+        );
 
         return new JwtAuthenticationResponse(accessToken, refreshToken, user.getRole().name());
     }
@@ -165,14 +171,19 @@ public class AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
 
+        boolean suspiciousLogin = isSuspiciousLogin(user, ipAddress, deviceInfo);
         String accessToken = tokenProvider.generateTokenFromUserId(user.getId());
         String refreshToken = createSession(user, ipAddress, deviceInfo, true);
         
         logAction(user.getId(), "GOOGLE_LOGIN", "SUCCESS", ipAddress);
 
-        notificationService.createNotification(user, "Social Login Alert", 
-            "You just signed in using Google from IP: " + ipAddress + ".", 
-            NotificationType.SECURITY, null);
+        notificationService.createNotification(
+                user,
+                suspiciousLogin ? "Suspicious Social Login" : "Social Login Alert",
+                "You just signed in using Google from IP: " + ipAddress + ".",
+                suspiciousLogin ? NotificationType.WARNING : NotificationType.SECURITY,
+                "/settings/sessions"
+        );
 
         return new JwtAuthenticationResponse(accessToken, refreshToken, user.getRole().name());
     }
@@ -242,14 +253,19 @@ public class AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
 
+        boolean suspiciousLogin = isSuspiciousLogin(user, ipAddress, deviceInfo);
         String accessToken = tokenProvider.generateTokenFromUserId(user.getId());
         String refreshToken = createSession(user, ipAddress, deviceInfo, Boolean.TRUE.equals(request.getRememberMe()));
 
         logAction(user.getId(), "LOGIN", "SUCCESS_AFTER_OTP", ipAddress);
 
-        notificationService.createNotification(user, "Secure Login Success", 
-            "MFA verification successful from IP: " + ipAddress + ".", 
-            NotificationType.SECURITY, null);
+        notificationService.createNotification(
+                user,
+                suspiciousLogin ? "Privileged Login From New Device" : "Secure Login Success",
+                "MFA verification successful from IP: " + ipAddress + ".",
+                suspiciousLogin ? NotificationType.WARNING : NotificationType.SECURITY,
+                "/settings/sessions"
+        );
 
         return new JwtAuthenticationResponse(accessToken, refreshToken, user.getRole().name());
     }
@@ -335,5 +351,18 @@ public class AuthService {
         return user.getRole() == Role.ADMIN
                 || user.getRole() == Role.INSTRUCTOR
                 || Boolean.TRUE.equals(user.isTwoFactorEnabled());
+    }
+
+    private boolean isSuspiciousLogin(User user, String ipAddress, String deviceInfo) {
+        return sessionRepository.findTop5ByUserOrderByLastActiveDesc(user).stream()
+                .noneMatch(session -> safeEquals(session.getIpAddress(), ipAddress)
+                        && safeEquals(session.getDeviceInfo(), deviceInfo));
+    }
+
+    private boolean safeEquals(String left, String right) {
+        if (left == null) {
+            return right == null;
+        }
+        return left.equals(right);
     }
 }

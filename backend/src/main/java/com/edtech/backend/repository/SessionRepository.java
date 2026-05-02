@@ -13,6 +13,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     List<Session> findByUserAndIsActiveTrue(User user);
     Optional<Session> findByIdAndUser(Long id, User user);
     Optional<Session> findByRefreshToken(String refreshToken);
+    List<Session> findTop5ByUserOrderByLastActiveDesc(User user);
     void deleteByRefreshToken(String refreshToken);
     void deleteByUser(User user);
     long countByIsActiveTrue();

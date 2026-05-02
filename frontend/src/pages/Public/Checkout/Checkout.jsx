@@ -15,6 +15,7 @@ const CheckoutForm = ({ course }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [clientSecret, setClientSecret] = useState('');
+  const [paymentIntentId, setPaymentIntentId] = useState('');
 
   useEffect(() => {
     if (!course) return;
@@ -23,6 +24,10 @@ const CheckoutForm = ({ course }) => {
       try {
         const response = await paymentApi.createIntent(course.id);
         setClientSecret(response.data.clientSecret);
+        setPaymentIntentId(response.data.paymentIntentId || '');
+        if (response.data.clientSecret === 'free_enrollment') {
+          navigate('/dashboard', { state: { message: 'Enrollment successful!' } });
+        }
       } catch (error) {
         setErrorMessage(getErrorMessage(error, 'Failed to initialize payment.'));
       }
@@ -42,10 +47,8 @@ const CheckoutForm = ({ course }) => {
     const cardElement = elements.getElement(CardElement);
 
     if (clientSecret.startsWith('mock_secret')) {
-      // Mock success for testing without Stripe
-      console.log('MOCK MODE: Simulating payment success...');
       try {
-        await paymentApi.confirm(course.id, 'mock_pi_' + Date.now());
+        await paymentApi.confirm(course.id, paymentIntentId);
         navigate('/dashboard', { state: { message: 'Enrollment successful (MOCK)!' } });
       } catch (confirmError) {
         setErrorMessage(getErrorMessage(confirmError, 'Enrollment failed.'));

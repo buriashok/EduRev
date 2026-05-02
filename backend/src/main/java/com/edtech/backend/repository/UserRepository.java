@@ -16,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsActiveTrue();
     long countByRole(Role role);
     List<User> findAllByOrderByCreatedAtDesc();
+    List<User> findByRole(Role role);
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM enrollments", nativeQuery = true)
     long countTotalEnrollments();

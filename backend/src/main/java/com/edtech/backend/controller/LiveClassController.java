@@ -35,12 +35,32 @@ public class LiveClassController {
         return liveClassRepository.findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime.now());
     }
 
+    @GetMapping("/mine")
+    @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
+    public List<LiveClass> getMyClasses(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        if (userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return liveClassRepository.findAll();
+        }
+        return liveClassRepository.findByInstructorIdOrderByStartTimeDesc(userPrincipal.getId());
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<LiveClass> scheduleClass(@RequestBody LiveClass liveClass, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         User instructor = userRepository.findById(userPrincipal.getId()).orElseThrow();
         liveClass.setInstructor(instructor);
-        return ResponseEntity.ok(liveClassRepository.save(liveClass));
+        if (liveClass.getEndTime() == null && liveClass.getStartTime() != null) {
+            liveClass.setEndTime(liveClass.getStartTime().plusHours(1));
+        }
+        LiveClass saved = liveClassRepository.save(liveClass);
+        notificationService.createNotification(
+                instructor,
+                "Live Session Scheduled",
+                "Your live session \"" + saved.getTitle() + "\" has been scheduled.",
+                NotificationType.SUCCESS,
+                "/instructor/live-sessions"
+        );
+        return ResponseEntity.ok(saved);
     }
 
     @PostMapping("/{id}/register")
@@ -50,6 +70,12 @@ public class LiveClassController {
             
             if (liveClass.getRegisteredUsers().size() >= liveClass.getMaxCapacity()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Class is at maximum capacity"));
+            }
+
+            boolean alreadyRegistered = liveClass.getRegisteredUsers().stream()
+                    .anyMatch(registeredUser -> registeredUser.getId().equals(user.getId()));
+            if (alreadyRegistered) {
+                return ResponseEntity.ok(Map.of("message", "Already registered"));
             }
             
             liveClass.getRegisteredUsers().add(user);
@@ -62,6 +88,16 @@ public class LiveClassController {
                 NotificationType.INFO,
                 "/live-classes"
             );
+
+            if (liveClass.getInstructor() != null) {
+                notificationService.createNotification(
+                    liveClass.getInstructor(),
+                    "New Live Session Registration",
+                    user.getFirstName() + " " + user.getLastName() + " registered for " + liveClass.getTitle() + ".",
+                    NotificationType.INFO,
+                    "/instructor/live-sessions"
+                );
+            }
             
             return ResponseEntity.ok(Map.of("message", "Successfully registered"));
         }).orElse(ResponseEntity.notFound().build());
@@ -114,14 +150,27 @@ public class LiveClassController {
     }
 
     @PostMapping("/{id}/join")
-    public ResponseEntity<?> joinLiveClass(@PathVariable Long id) {
+    public ResponseEntity<?> joinLiveClass(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return liveClassRepository.findById(id)
-                .map(liveClass -> ResponseEntity.ok().body(Map.of(
+                .map(liveClass -> {
+                    boolean isInstructor = liveClass.getInstructor() != null
+                            && liveClass.getInstructor().getId().equals(userPrincipal.getId());
+                    boolean isAdmin = userPrincipal.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                    boolean isRegistered = liveClass.getRegisteredUsers().stream()
+                            .anyMatch(user -> user.getId().equals(userPrincipal.getId()));
+
+                    if (!isInstructor && !isAdmin && !isRegistered) {
+                        return ResponseEntity.status(403).body(Map.of("message", "Register for this live class before joining."));
+                    }
+
+                    return ResponseEntity.ok().body(Map.of(
                         "meetingLink", liveClass.getMeetingLink(),
                         "title", liveClass.getTitle(),
                         "startsAt", liveClass.getStartTime(),
                         "recordingUrl", liveClass.getRecordingUrl() != null ? liveClass.getRecordingUrl() : ""
-                )))
+                    ));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 }

@@ -127,4 +127,26 @@ public class Course {
     public void setStatus(CourseStatus status) {
         this.status = status;
     }
+
+    @Transient
+    private Double averageRating;
+
+    @Transient
+    private Long reviewCount;
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Long getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Long reviewCount) {
+        this.reviewCount = reviewCount;
+    }
 }

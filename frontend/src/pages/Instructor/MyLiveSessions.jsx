@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Video, Calendar, Users, Clock, Plus, ExternalLink, Trash2, CheckCircle } from 'lucide-react';
+import { Video, Calendar, Users, Clock, Plus, ExternalLink, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { liveClassApi, getErrorMessage } from '../../services/api';
 import styles from './Instructor.module.css';
 
 const MyLiveSessions = () => {
   const [sessions, setSessions] = useState([]);
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newSession, setNewSession] = useState({
@@ -14,14 +16,14 @@ const MyLiveSessions = () => {
     meetingLink: '',
     maxCapacity: 50
   });
+  const navigate = useNavigate();
 
   const fetchSessions = async () => {
     try {
-      // Assuming we have an endpoint for instructor-specific sessions
-      const res = await liveClassApi.getUpcoming(); // For now, filtering locally or assuming it returns all
+      const res = await liveClassApi.getMine();
       setSessions(res.data);
     } catch (err) {
-      console.error('Failed to load sessions');
+      setMessage(getErrorMessage(err, 'Failed to load sessions.'));
     } finally {
       setLoading(false);
     }
@@ -36,9 +38,10 @@ const MyLiveSessions = () => {
     try {
       await liveClassApi.create(newSession);
       setShowModal(false);
+      setMessage('Session scheduled successfully.');
       fetchSessions();
     } catch (err) {
-      alert(getErrorMessage(err, 'Failed to create session'));
+      setMessage(getErrorMessage(err, 'Failed to create session'));
     }
   };
 
@@ -53,6 +56,8 @@ const MyLiveSessions = () => {
           <Plus size={18} /> Schedule Session
         </button>
       </header>
+
+      {message && <div className={styles.message}>{message}</div>}
 
       {loading ? (
         <div className="flex-center" style={{ minHeight: '300px' }}>
@@ -89,8 +94,8 @@ const MyLiveSessions = () => {
 
               <div className={styles.cardFooter}>
                 {!session.isCompleted && (
-                  <button className="btn-primary" style={{ width: '100%' }}>
-                    Start Session <ExternalLink size={16} />
+                  <button className="btn-primary" style={{ width: '100%' }} onClick={() => navigate(`/instructor/live-classes/${session.id}`)}>
+                    Manage Session <ExternalLink size={16} />
                   </button>
                 )}
                 {session.isCompleted && (

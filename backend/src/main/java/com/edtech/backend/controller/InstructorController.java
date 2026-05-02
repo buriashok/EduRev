@@ -41,9 +41,7 @@ public class InstructorController {
             if (!course.getInstructor().getId().equals(userPrincipal.getId())) {
                 return ResponseEntity.status(403).<List<User>>build();
             }
-            // In a real app, you'd have an Enrollment table. 
-            // For now, we can find students who have paid for this course.
-            List<Payment> payments = paymentRepository.findAll().stream()
+            List<Payment> payments = paymentRepository.findByStatus("SUCCEEDED").stream()
                     .filter(p -> p.getCourse().getId().equals(courseId))
                     .collect(Collectors.toList());
             
@@ -58,8 +56,8 @@ public class InstructorController {
 
     @GetMapping("/earnings")
     public ResponseEntity<Map<String, Object>> getEarnings(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        java.math.BigDecimal revenueCents = paymentRepository.sumRevenueByInstructor(userPrincipal.getId());
-        double revenue = revenueCents != null ? revenueCents.doubleValue() / 100.0 : 0.0;
+        java.math.BigDecimal revenueValue = paymentRepository.sumSucceededRevenueByInstructor(userPrincipal.getId());
+        double revenue = revenueValue != null ? revenueValue.doubleValue() : 0.0;
         
         return ResponseEntity.ok(Map.of(
             "totalRevenue", revenue,
@@ -70,7 +68,7 @@ public class InstructorController {
     @GetMapping("/analytics")
     public ResponseEntity<Map<String, Object>> getAnalytics(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         List<Course> courses = courseRepository.findByInstructorId(userPrincipal.getId());
-        List<Payment> payments = paymentRepository.findAll().stream()
+        List<Payment> payments = paymentRepository.findByStatus("SUCCEEDED").stream()
                 .filter(p -> p.getCourse().getInstructor().getId().equals(userPrincipal.getId()))
                 .collect(Collectors.toList());
 
@@ -110,7 +108,7 @@ public class InstructorController {
 
     @GetMapping("/students")
     public ResponseEntity<List<Map<String, Object>>> getMyStudents(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        List<Payment> payments = paymentRepository.findAll().stream()
+        List<Payment> payments = paymentRepository.findByStatus("SUCCEEDED").stream()
                 .filter(p -> p.getCourse().getInstructor().getId().equals(userPrincipal.getId()))
                 .collect(Collectors.toList());
 

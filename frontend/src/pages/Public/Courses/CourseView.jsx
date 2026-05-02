@@ -9,7 +9,8 @@ import {
   Loader2, 
   Award,
   ChevronRight,
-  Lock
+  Lock,
+  Star
 } from 'lucide-react';
 import { courseApi, progressApi, certificateApi, getErrorMessage } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
@@ -29,6 +30,8 @@ const CourseView = () => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [certificate, setCertificate] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
 
   const fetchCertificate = async () => {
     try {
@@ -54,6 +57,8 @@ const CourseView = () => {
         if (courseRes.data.lessons?.length > 0) {
           setCurrentLesson(courseRes.data.lessons[0]);
         }
+        const reviewRes = await courseApi.getReviews(courseId);
+        setReviews(reviewRes.data);
         await fetchCertificate();
       } catch (error) {
         setMessage(getErrorMessage(error, 'Failed to load course content.'));
@@ -70,7 +75,7 @@ const CourseView = () => {
     
     setIsCompleting(true);
     try {
-      await progressApi.completeLesson(courseId, currentLesson.id);
+      const response = await progressApi.completeLesson(courseId, currentLesson.id);
       setCompletedLessonIds(prev => new Set([...prev, currentLesson.id]));
       
       const currentIndex = course.lessons.findIndex(l => l.id === currentLesson.id);
@@ -80,12 +85,32 @@ const CourseView = () => {
         // Last lesson completed!
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
-        await fetchCertificate();
+        if (response.data?.certificateId) {
+          navigate(`/certificate/${response.data.certificateId}`);
+        } else {
+          await fetchCertificate();
+        }
       }
     } catch (error) {
       console.error('Failed to mark lesson complete', error);
     } finally {
       setIsCompleting(false);
+    }
+  };
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await courseApi.submitReview(courseId, reviewForm);
+      setReviews((current) => {
+        const exists = current.some((review) => review.id === response.data.id);
+        return exists
+          ? current.map((review) => review.id === response.data.id ? response.data : review)
+          : [response.data, ...current];
+      });
+      setMessage('Review saved successfully.');
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Failed to save review.'));
     }
   };
 
@@ -176,6 +201,7 @@ const CourseView = () => {
             </div>
 
             <div className={styles.textContent}>
+              {message && <div className={styles.message}>{message}</div>}
               <div className={styles.contentHeader}>
                 <h1>{currentLesson.title}</h1>
                 <div className={styles.actions}>
@@ -206,6 +232,54 @@ const CourseView = () => {
                   <button className="btn-primary" onClick={() => navigate(`/certificate/${certificate.id}`)}>View Certificate</button>
                 </div>
               )}
+
+              <section className={styles.reviewsSection}>
+                <div className={styles.reviewsHeader}>
+                  <h2>Course Reviews</h2>
+                  <span><Star size={16} fill="currentColor" /> {Number(course.averageRating || 0).toFixed(1)} · {course.reviewCount || reviews.length} reviews</span>
+                </div>
+
+                {user?.role === 'STUDENT' && (
+                  <form className={styles.reviewForm} onSubmit={handleReviewSubmit}>
+                    <select
+                      value={reviewForm.rating}
+                      onChange={(event) => setReviewForm({...reviewForm, rating: Number(event.target.value)})}
+                    >
+                      {[5, 4, 3, 2, 1].map((rating) => (
+                        <option key={rating} value={rating}>{rating} stars</option>
+                      ))}
+                    </select>
+                    <textarea
+                      value={reviewForm.comment}
+                      onChange={(event) => setReviewForm({...reviewForm, comment: event.target.value})}
+                      placeholder="Share what helped you learn"
+                      rows={3}
+                    />
+                    <button type="submit" className="btn-primary">Save Review</button>
+                  </form>
+                )}
+
+                <div className={styles.reviewList}>
+                  {reviews.length === 0 ? (
+                    <p className={styles.noReviews}>No reviews yet.</p>
+                  ) : (
+                    reviews.map((review) => (
+                      <article key={review.id} className={styles.reviewItem}>
+                        <div>
+                          <strong>{review.user.firstName} {review.user.lastName}</strong>
+                          <span>{new Date(review.updatedAt || review.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className={styles.reviewStars}>
+                          {Array.from({ length: review.rating }).map((_, index) => (
+                            <Star key={index} size={14} fill="currentColor" />
+                          ))}
+                        </div>
+                        {review.comment && <p>{review.comment}</p>}
+                      </article>
+                    ))
+                  )}
+                </div>
+              </section>
             </div>
           </div>
         ) : (
