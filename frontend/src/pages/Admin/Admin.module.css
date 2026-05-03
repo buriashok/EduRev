@@ -31,6 +31,26 @@
   border-radius: 1rem;
 }
 
+.notice {
+  margin-bottom: 1.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.notice.success {
+  color: var(--color-success);
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.18);
+}
+
+.notice.error {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
 .search {
   display: flex;
   align-items: center;

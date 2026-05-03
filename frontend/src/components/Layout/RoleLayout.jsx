@@ -8,6 +8,7 @@ import Footer from '../Footer/Footer';
 import AiMentor from '../AiMentor/AiMentor';
 import NotificationPanel from '../Notifications/NotificationPanel';
 import { notificationApi } from '../../services/api';
+import { ROLES, getRoleHomePath, getRoleLabel } from '../../utils/roles';
 import styles from './RoleLayout.module.css';
 
 const RoleLayout = ({ children }) => {
@@ -19,13 +20,13 @@ const RoleLayout = ({ children }) => {
 
   useEffect(() => {
     if (user && location.pathname === '/') {
-      if (user.role === 'INSTRUCTOR') navigate('/dashboard');
-      if (user.role === 'ADMIN') navigate('/admin/dashboard');
+      if (user.role === ROLES.INSTRUCTOR || user.role === ROLES.ADMIN) navigate(getRoleHomePath(user.role));
     }
   }, [user, location.pathname, navigate]);
 
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnreadCount(0);
       return;
     }
@@ -68,10 +69,10 @@ const RoleLayout = ({ children }) => {
         <header className={styles.topBar}>
           <div className={styles.search}>
             <Bot size={18} />
-            <span>EduBot is ready with {user.role.toLowerCase()} support</span>
+            <span>EduBot is ready with {getRoleLabel(user.role).toLowerCase()} support</span>
           </div>
           <div className={styles.actions}>
-            <span className={styles.roleBadge}>{user.role}</span>
+            <span className={styles.roleBadge}>{getRoleLabel(user.role)}</span>
             <div className={styles.notificationHost}>
               <button
                 type="button"

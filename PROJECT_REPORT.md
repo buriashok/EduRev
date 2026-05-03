@@ -7,7 +7,45 @@ EduRev is a full-stack learning platform with:
 - `backend/`: Spring Boot 3.4, Spring Security, JPA, H2/PostgreSQL-ready persistence, mail integration, JWT auth, Stripe/QR dependencies.
 - `frontend/`: React 19 + Vite SPA with role-aware dashboards, profile/settings pages, courses, quiz, live classes, discussion/forum, checkout, and EduRevolution pages.
 
-This report reflects the repository state inspected and updated on **2026-04-25**.
+This report reflects the repository state inspected and updated through **2026-05-02**.
+
+## 2026-05-02 Role-Focused Update
+
+- Added a shared backend `RoleAccess` helper so admin, instructor, and owner checks use one consistent rule.
+- Aligned instructor APIs with the frontend's intended admin override: admins can inspect instructor courses, roster data, live-session registrations, earnings, and instructor analytics.
+- Closed a course-ownership gap: instructors can no longer update or delete courses owned by another instructor; admins still can.
+- Hardened admin role management so the platform cannot demote, freeze, or delete the last active admin account, and self-impersonation is blocked.
+- Added a shared frontend role utility for role constants, labels, redirects, and self-service registration options.
+- Updated route guards, auth redirects, navbar/sidebar labels, and registration role choices to use the shared role rules.
+- Completed the standalone admin user-management page actions for role updates, freeze/unfreeze, force logout, impersonation, delete, and bulk actions.
+
+## 2026-05-02 Notification Center Update
+
+- Added notification filtering by type and unread state on the backend.
+- Added delete-one and clear-read notification endpoints.
+- Stopped serializing the notification owner object back to the frontend response.
+- Fixed the dropdown notification count to use the real unread-count endpoint instead of counting only the current page.
+- Added delete controls to the dropdown notification panel.
+- Upgraded the full notifications page with All, Unread, Security, and Warning filters, pagination controls, mark-all-read, clear-read, and per-notification delete actions.
+
+## 2026-05-02 Payments and Webhooks Update
+
+- Added payment status and payment history endpoints for authenticated users.
+- Made Stripe webhook handling stricter for real webhooks by requiring `Stripe-Signature`, while still allowing local mock webhook payloads.
+- Added a webhook-specific enrollment confirmation path so `payment_intent.succeeded` does not re-fetch Stripe after the event has already been verified.
+- Kept payment confirmation idempotent and protected against mismatched payment intent, user, and course combinations.
+- Added safer failed-payment handling so already-successful payments are not downgraded by a later failure event.
+- Prevented payment history responses from serializing the full user object.
+- Updated checkout so local mock payments work without a Stripe publishable key or card form, while real card payments still require Stripe Elements.
+
+## 2026-05-03 Certificate Generation Update
+
+- Added a safe certificate response DTO for owned, listed, and public verification certificate responses.
+- Added an authenticated endpoint to issue or re-issue a certificate for a completed course.
+- Added course-completion validation before manual certificate issuance.
+- Added certificate status metadata to course progress responses.
+- Updated course learning UI to show a generate-certificate action when all lessons are completed but no certificate exists yet.
+- Updated certificate display and share text to use the new DTO fields instead of nested user/course entities.
 
 ## What I Inspected
 

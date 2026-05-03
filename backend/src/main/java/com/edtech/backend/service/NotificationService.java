@@ -33,6 +33,24 @@ public class NotificationService {
         return notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
     }
 
+    public Page<Notification> getUserNotifications(User user, NotificationType type, Boolean unreadOnly, Pageable pageable) {
+        boolean unread = Boolean.TRUE.equals(unreadOnly);
+
+        if (type != null && unreadOnly != null) {
+            return notificationRepository.findByUserAndTypeAndIsReadOrderByCreatedAtDesc(user, type, !unread, pageable);
+        }
+
+        if (type != null) {
+            return notificationRepository.findByUserAndTypeOrderByCreatedAtDesc(user, type, pageable);
+        }
+
+        if (unreadOnly != null) {
+            return notificationRepository.findByUserAndIsReadOrderByCreatedAtDesc(user, !unread, pageable);
+        }
+
+        return getUserNotifications(user, pageable);
+    }
+
     public long getUnreadCount(User user) {
         return notificationRepository.countByUserAndIsRead(user, false);
     }
@@ -54,5 +72,15 @@ public class NotificationService {
                 notificationRepository.save(n);
             }
         });
+    }
+
+    @Transactional
+    public void deleteNotification(Long id, User user) {
+        notificationRepository.findByIdAndUser(id, user).ifPresent(notificationRepository::delete);
+    }
+
+    @Transactional
+    public long deleteReadNotifications(User user) {
+        return notificationRepository.deleteByUserAndIsRead(user, true);
     }
 }

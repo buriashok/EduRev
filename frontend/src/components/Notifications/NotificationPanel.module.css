@@ -134,6 +134,16 @@
   overflow: hidden;
 }
 
+.error {
+  margin: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-error);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .actionText {
   display: flex;
   align-items: center;
@@ -153,6 +163,25 @@
   background: var(--color-primary);
   border-radius: 50%;
   box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.1);
+}
+
+.deleteButton {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.75rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  background: transparent;
+}
+
+.deleteButton:hover {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .securityIcon { color: #f44336; }

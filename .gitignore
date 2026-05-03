@@ -22,3 +22,5 @@ backend/.classpath
 # OS
 .DS_Store
 Thumbs.db
+
+.m2repo/

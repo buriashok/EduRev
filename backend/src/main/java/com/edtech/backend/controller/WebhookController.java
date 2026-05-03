@@ -1,6 +1,8 @@
 package com.edtech.backend.controller;
 
 import com.edtech.backend.service.PaymentService;
+import com.edtech.backend.model.StripeEventLog;
+import com.edtech.backend.repository.StripeEventLogRepository;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
@@ -19,21 +21,24 @@ public class WebhookController {
     @Autowired
     private PaymentService paymentService;
 
+    @Autowired
+    private StripeEventLogRepository stripeEventLogRepository;
+
     @PostMapping("/stripe")
     public ResponseEntity<String> handleStripeWebhook(
             @RequestBody String payload,
-            @RequestHeader("Stripe-Signature") String sigHeader
+            @RequestHeader(value = "Stripe-Signature", required = false) String sigHeader
     ) {
         String endpointSecret = paymentService.getWebhookSecret();
         Event event;
 
         try {
-            if ("whsec_mock_secret".equals(endpointSecret)) {
-                // For development with mock secret, we can skip signature verification
-                // In production, this should NEVER happen with a real whsec_
-                System.out.println("WARNING: Skipping Stripe signature verification in MOCK mode");
+            if (isMockWebhookSecret(endpointSecret)) {
                 event = com.stripe.net.ApiResource.GSON.fromJson(payload, Event.class);
             } else {
+                if (sigHeader == null || sigHeader.isBlank()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing Stripe signature");
+                }
                 event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
             }
         } catch (SignatureVerificationException e) {
@@ -44,18 +49,36 @@ public class WebhookController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid payload");
         }
 
-        // Handle the event
-        switch (event.getType()) {
-            case "payment_intent.succeeded":
-                PaymentIntent paymentIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElseThrow();
-                handlePaymentSuccess(paymentIntent);
-                break;
-            case "payment_intent.payment_failed":
-                PaymentIntent failedIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElseThrow();
-                paymentService.markPaymentFailed(failedIntent.getId());
-                break;
-            default:
-                System.out.println("Unhandled event type: " + event.getType());
+        // Check Idempotency
+        if (stripeEventLogRepository.existsById(event.getId())) {
+            System.out.println("Idempotency hit: Event " + event.getId() + " already processed.");
+            return ResponseEntity.ok("Success"); // Already processed
+        }
+
+        try {
+            // Handle the event
+            switch (event.getType()) {
+                case "payment_intent.succeeded":
+                    PaymentIntent paymentIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElseThrow();
+                    handlePaymentSuccess(paymentIntent);
+                    break;
+                case "payment_intent.payment_failed":
+                    PaymentIntent failedIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElseThrow();
+                    paymentService.markPaymentFailed(failedIntent.getId());
+                    break;
+                default:
+                    System.out.println("Unhandled event type: " + event.getType());
+            }
+
+            // Save idempotency record
+            stripeEventLogRepository.save(new StripeEventLog(event.getId(), event.getType(), "PROCESSED"));
+
+        } catch (Exception e) {
+            System.err.println("Error processing webhook logic: " + e.getMessage());
+            StripeEventLog errorLog = new StripeEventLog(event.getId(), event.getType(), "FAILED");
+            errorLog.setErrorMessage(e.getMessage());
+            stripeEventLogRepository.save(errorLog);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing webhook");
         }
 
         return ResponseEntity.ok("Success");
@@ -67,12 +90,18 @@ public class WebhookController {
             try {
                 Long userId = Long.parseLong(metadata.get("userId"));
                 Long courseId = Long.parseLong(metadata.get("courseId"));
-                paymentService.confirmEnrollment(userId, courseId, paymentIntent.getId());
+                paymentService.confirmWebhookEnrollment(userId, courseId, paymentIntent.getId(), paymentIntent.getCurrency());
             } catch (NumberFormatException ex) {
                 System.err.println("Invalid metadata in PaymentIntent: " + paymentIntent.getId());
             }
         } else {
             System.err.println("Missing metadata in PaymentIntent: " + paymentIntent.getId());
         }
+    }
+
+    private boolean isMockWebhookSecret(String endpointSecret) {
+        return endpointSecret == null
+                || endpointSecret.isBlank()
+                || "whsec_mock_secret".equals(endpointSecret);
     }
 }

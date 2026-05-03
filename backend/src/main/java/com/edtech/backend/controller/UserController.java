@@ -85,6 +85,21 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Account deactivated"));
     }
 
+    @GetMapping("/me/2fa/setup")
+    public ResponseEntity<Map<String, String>> setup2FA(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(userService.setup2FA(userPrincipal.getId()));
+    }
+
+    @PostMapping("/me/2fa/verify")
+    public ResponseEntity<?> verify2FA(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody Map<String, String> payload) {
+        String code = payload.get("code");
+        if (code == null || code.isBlank()) {
+            throw new RuntimeException("Code is required");
+        }
+        userService.verify2FASetup(userPrincipal.getId(), code);
+        return ResponseEntity.ok(Map.of("message", "2FA successfully enabled"));
+    }
+
     @GetMapping("/admin/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<User>> getAllUsersForAdmin() {

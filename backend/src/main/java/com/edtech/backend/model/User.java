@@ -62,6 +62,10 @@ public class User {
     @Column(name = "two_factor_method")
     private String twoFactorMethod = "EMAIL";
 
+    @Column(name = "two_factor_secret")
+    @JsonIgnore
+    private String twoFactorSecret;
+
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
@@ -216,6 +220,14 @@ public class User {
 
     public void setTwoFactorMethod(String twoFactorMethod) {
         this.twoFactorMethod = twoFactorMethod;
+    }
+
+    public String getTwoFactorSecret() {
+        return twoFactorSecret;
+    }
+
+    public void setTwoFactorSecret(String twoFactorSecret) {
+        this.twoFactorSecret = twoFactorSecret;
     }
 
     public LocalDateTime getLastLoginAt() {

@@ -5,6 +5,7 @@ import com.edtech.backend.model.Payment;
 import com.edtech.backend.model.User;
 import com.edtech.backend.repository.CourseRepository;
 import com.edtech.backend.repository.PaymentRepository;
+import com.edtech.backend.security.RoleAccess;
 import com.edtech.backend.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/instructor")
-@PreAuthorize("hasRole('INSTRUCTOR')")
+@PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
 public class InstructorController {
 
     @Autowired
@@ -29,6 +30,9 @@ public class InstructorController {
 
     @GetMapping("/courses")
     public List<Course> getMyCourses(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        if (RoleAccess.isAdmin(userPrincipal)) {
+            return courseRepository.findAll();
+        }
         return courseRepository.findByInstructorId(userPrincipal.getId());
     }
 
@@ -38,7 +42,7 @@ public class InstructorController {
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         return courseRepository.findById(courseId).map(course -> {
-            if (!course.getInstructor().getId().equals(userPrincipal.getId())) {
+            if (!RoleAccess.canManageInstructorContent(userPrincipal, course.getInstructor().getId())) {
                 return ResponseEntity.status(403).<List<User>>build();
             }
             List<Payment> payments = paymentRepository.findByStatus("SUCCEEDED").stream()
@@ -57,6 +61,11 @@ public class InstructorController {
     @GetMapping("/earnings")
     public ResponseEntity<Map<String, Object>> getEarnings(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         java.math.BigDecimal revenueValue = paymentRepository.sumSucceededRevenueByInstructor(userPrincipal.getId());
+        if (RoleAccess.isAdmin(userPrincipal)) {
+            revenueValue = paymentRepository.findByStatus("SUCCEEDED").stream()
+                    .map(Payment::getAmount)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        }
         double revenue = revenueValue != null ? revenueValue.doubleValue() : 0.0;
         
         return ResponseEntity.ok(Map.of(
@@ -67,9 +76,11 @@ public class InstructorController {
 
     @GetMapping("/analytics")
     public ResponseEntity<Map<String, Object>> getAnalytics(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        List<Course> courses = courseRepository.findByInstructorId(userPrincipal.getId());
+        List<Course> courses = RoleAccess.isAdmin(userPrincipal)
+                ? courseRepository.findAll()
+                : courseRepository.findByInstructorId(userPrincipal.getId());
         List<Payment> payments = paymentRepository.findByStatus("SUCCEEDED").stream()
-                .filter(p -> p.getCourse().getInstructor().getId().equals(userPrincipal.getId()))
+                .filter(p -> RoleAccess.isAdmin(userPrincipal) || p.getCourse().getInstructor().getId().equals(userPrincipal.getId()))
                 .collect(Collectors.toList());
 
         // Top Courses by Enrollment
@@ -109,7 +120,7 @@ public class InstructorController {
     @GetMapping("/students")
     public ResponseEntity<List<Map<String, Object>>> getMyStudents(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         List<Payment> payments = paymentRepository.findByStatus("SUCCEEDED").stream()
-                .filter(p -> p.getCourse().getInstructor().getId().equals(userPrincipal.getId()))
+                .filter(p -> RoleAccess.isAdmin(userPrincipal) || p.getCourse().getInstructor().getId().equals(userPrincipal.getId()))
                 .collect(Collectors.toList());
 
         List<Map<String, Object>> students = payments.stream()

@@ -3,12 +3,9 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   CheckCircle2, 
   Circle, 
-  PlayCircle, 
-  BookOpen, 
   ArrowLeft, 
   Loader2, 
   Award,
-  ChevronRight,
   Lock,
   Star
 } from 'lucide-react';
@@ -36,7 +33,7 @@ const CourseView = () => {
   const fetchCertificate = async () => {
     try {
       const res = await certificateApi.getMyCertificates();
-      const cert = res.data.find(c => c.course.id === parseInt(courseId));
+      const cert = res.data.find(c => c.courseId === parseInt(courseId, 10));
       if (cert) setCertificate(cert);
     } catch (error) {
       console.error('Failed to load certificate', error);
@@ -53,6 +50,9 @@ const CourseView = () => {
         
         setCourse(courseRes.data);
         setCompletedLessonIds(new Set(progressRes.data.completedLessonIds));
+        if (progressRes.data.certificateId) {
+          setCertificate({ id: progressRes.data.certificateId });
+        }
         
         if (courseRes.data.lessons?.length > 0) {
           setCurrentLesson(courseRes.data.lessons[0]);
@@ -68,6 +68,7 @@ const CourseView = () => {
     };
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const handleLessonComplete = async () => {
@@ -95,6 +96,16 @@ const CourseView = () => {
       console.error('Failed to mark lesson complete', error);
     } finally {
       setIsCompleting(false);
+    }
+  };
+
+  const handleIssueCertificate = async () => {
+    try {
+      const response = await certificateApi.issueForCourse(courseId);
+      setCertificate(response.data);
+      navigate(`/certificate/${response.data.id}`);
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Complete every lesson before requesting a certificate.'));
     }
   };
 
@@ -230,6 +241,17 @@ const CourseView = () => {
                     <p>You have earned your certificate for this course.</p>
                   </div>
                   <button className="btn-primary" onClick={() => navigate(`/certificate/${certificate.id}`)}>View Certificate</button>
+                </div>
+              )}
+
+              {!certificate && course.lessons?.length > 0 && completedLessonIds.size >= course.lessons.length && (
+                <div className={`glass-panel ${styles.certCard}`}>
+                  <Award size={48} color="#f59e0b" />
+                  <div>
+                    <h3>Course completed</h3>
+                    <p>Your lessons are complete. Generate your verified certificate.</p>
+                  </div>
+                  <button className="btn-primary" onClick={handleIssueCertificate}>Generate Certificate</button>
                 </div>
               )}
 

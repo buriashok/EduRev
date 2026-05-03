@@ -29,6 +29,10 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [message, setMessage] = useState({ type: '', text: '' });
+  
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState(null);
+  const [verificationCode, setVerificationCode] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -225,9 +229,25 @@ const Settings = () => {
         )}
 
         {activeTab === 'security' && (
-          <form onSubmit={handleUpdatePassword} className={styles.form}>
+          <div className={styles.form}>
             <section className={styles.section}>
-              <h3>Update Password</h3>
+              <h3>Two-Factor Authentication</h3>
+              <div className={styles.card} style={{ marginBottom: '20px' }}>
+                <div>
+                  <strong>Authenticator App (TOTP)</strong>
+                  <p>Secure your account with an authenticator app.</p>
+                </div>
+                {formData.twoFactorEnabled && formData.twoFactorMethod === 'APP' ? (
+                  <span className="badge" style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>Enabled</span>
+                ) : (
+                  <button type="button" className="btn-primary" onClick={handleSetup2FA}>Enable 2FA</button>
+                )}
+              </div>
+            </section>
+            
+            <form onSubmit={handleUpdatePassword}>
+              <section className={styles.section}>
+                <h3>Update Password</h3>
               <div className={styles.inputGroup}>
                 <label>Current Password</label>
                 <input type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} required />
@@ -244,7 +264,8 @@ const Settings = () => {
             <button type="submit" className="btn-primary" disabled={saving}>
               <Key size={18} /> {saving ? 'Updating...' : 'Update Password'}
             </button>
-          </form>
+            </form>
+          </div>
         )}
 
         {activeTab === 'account' && (
@@ -271,6 +292,38 @@ const Settings = () => {
                 </button>
               </div>
             </section>
+          </div>
+        )}
+
+        {show2FAModal && (
+          <div className={styles.modalOverlay} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div className={`glass-panel ${styles.modal}`} style={{ padding: '2rem', maxWidth: '400px', width: '100%' }}>
+              <h2>Setup Authenticator App</h2>
+              <p>Scan the QR code below with Google Authenticator or Authy, then enter the 6-digit code.</p>
+              
+              <div style={{ textAlign: 'center', margin: '20px 0' }}>
+                {qrCodeData ? <img src={qrCodeData} alt="QR Code" style={{ width: '200px', height: '200px' }} /> : <div className="spinner"></div>}
+              </div>
+
+              <form onSubmit={handleVerify2FA}>
+                <div className={styles.inputGroup}>
+                  <label>Verification Code</label>
+                  <input 
+                    type="text" 
+                    required 
+                    maxLength={6}
+                    value={verificationCode}
+                    onChange={e => setVerificationCode(e.target.value)}
+                    placeholder="000000"
+                    style={{ letterSpacing: '4px', textAlign: 'center', fontSize: '1.2rem' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button type="button" className="btn-secondary" onClick={() => setShow2FAModal(false)} style={{ flex: 1 }}>Cancel</button>
+                  <button type="submit" className="btn-primary" disabled={saving} style={{ flex: 1 }}>Verify & Enable</button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </main>

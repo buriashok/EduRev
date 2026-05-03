@@ -52,6 +52,14 @@ public class LiveClass {
     )
     private Set<User> registeredUsers = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+        name = "live_class_attendance",
+        joinColumns = @JoinColumn(name = "live_class_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> attendedUsers = new HashSet<>();
+
     // Getters and Setters
 
     public Long getId() {
@@ -161,5 +169,18 @@ public class LiveClass {
     @com.fasterxml.jackson.annotation.JsonProperty("currentRegistrations")
     public int getCurrentRegistrations() {
         return registeredUsers == null ? 0 : registeredUsers.size();
+    }
+
+    public Set<User> getAttendedUsers() {
+        return attendedUsers;
+    }
+
+    public void setAttendedUsers(Set<User> attendedUsers) {
+        this.attendedUsers = attendedUsers;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("currentAttendance")
+    public int getCurrentAttendance() {
+        return attendedUsers == null ? 0 : attendedUsers.size();
     }
 }

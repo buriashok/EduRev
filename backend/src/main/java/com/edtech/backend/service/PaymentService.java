@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -130,12 +131,53 @@ public class PaymentService {
     }
 
     @Transactional
+    public void confirmWebhookEnrollment(Long userId, Long courseId, String paymentIntentId, String currency) {
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            throw new RuntimeException("Payment intent is required.");
+        }
+
+        User user = userRepository.findById(userId).orElseThrow();
+        Course course = courseRepository.findById(courseId).orElseThrow();
+        Payment existingPayment = paymentRepository.findByStripePaymentIntentId(paymentIntentId).orElse(null);
+
+        if (existingPayment != null
+                && (!existingPayment.getUser().getId().equals(userId) || !existingPayment.getCourse().getId().equals(courseId))) {
+            throw new RuntimeException("Payment intent does not match this enrollment.");
+        }
+
+        confirmEnrollmentInternal(user, course, paymentIntentId, normalizeCurrency(currency));
+    }
+
+    public Map<String, Object> getCoursePaymentStatus(Long userId, Long courseId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        Course course = courseRepository.findById(courseId).orElseThrow();
+        Payment latestPayment = paymentRepository.findTopByUserAndCourseOrderByCreatedAtDesc(user, course).orElse(null);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("enrolled", user.getEnrolledCourses().contains(course));
+        response.put("courseId", course.getId());
+        response.put("status", latestPayment == null ? "NONE" : latestPayment.getStatus());
+        response.put("paymentIntentId", latestPayment == null ? "" : latestPayment.getStripePaymentIntentId());
+        response.put("amount", latestPayment == null ? course.getPrice() : latestPayment.getAmount());
+        response.put("currency", latestPayment == null ? "INR" : latestPayment.getCurrency());
+        return response;
+    }
+
+    public List<Payment> getMyPayments(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        return paymentRepository.findByUserOrderByCreatedAtDesc(user);
+    }
+
+    @Transactional
     public void markPaymentFailed(String paymentIntentId) {
         if (paymentIntentId == null || paymentIntentId.isBlank()) {
             return;
         }
 
         paymentRepository.findByStripePaymentIntentId(paymentIntentId).ifPresent(payment -> {
+            if ("SUCCEEDED".equals(payment.getStatus())) {
+                return;
+            }
             payment.setStatus("FAILED");
             paymentRepository.save(payment);
             notificationService.createNotification(
@@ -149,6 +191,11 @@ public class PaymentService {
     }
 
     private Payment createPendingPayment(User user, Course course, String paymentIntentId, String currency) {
+        Payment existing = paymentRepository.findByStripePaymentIntentId(paymentIntentId).orElse(null);
+        if (existing != null) {
+            return existing;
+        }
+
         Payment payment = new Payment();
         payment.setUser(user);
         payment.setCourse(course);
@@ -176,7 +223,7 @@ public class PaymentService {
             payment.setUser(user);
             payment.setCourse(course);
             payment.setAmount(course.getPrice());
-            payment.setCurrency(currency);
+            payment.setCurrency(normalizeCurrency(currency));
             payment.setStatus("SUCCEEDED");
         paymentRepository.save(payment);
 
@@ -197,5 +244,12 @@ public class PaymentService {
 
     public String getWebhookSecret() {
         return webhookSecret;
+    }
+
+    private String normalizeCurrency(String currency) {
+        if (currency == null || currency.isBlank()) {
+            return "INR";
+        }
+        return currency.trim().toUpperCase();
     }
 }

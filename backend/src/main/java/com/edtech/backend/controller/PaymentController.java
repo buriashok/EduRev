@@ -35,4 +35,17 @@ public class PaymentController {
         paymentService.confirmEnrollment(userPrincipal.getId(), courseId, paymentIntentId);
         return ResponseEntity.ok(Map.of("message", "Enrollment confirmed"));
     }
+
+    @GetMapping("/status/{courseId}")
+    public ResponseEntity<?> getPaymentStatus(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Long courseId
+    ) {
+        return ResponseEntity.ok(paymentService.getCoursePaymentStatus(userPrincipal.getId(), courseId));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getPaymentHistory(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(paymentService.getMyPayments(userPrincipal.getId()));
+    }
 }

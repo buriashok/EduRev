@@ -6,7 +6,8 @@ import { CreditCard, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
 import { paymentApi, getErrorMessage } from '../../../services/api';
 import styles from './Checkout.module.css';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 const CheckoutForm = ({ course }) => {
   const stripe = useStripe();
@@ -16,6 +17,7 @@ const CheckoutForm = ({ course }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [paymentIntentId, setPaymentIntentId] = useState('');
+  const [intentLoading, setIntentLoading] = useState(true);
 
   useEffect(() => {
     if (!course) return;
@@ -30,21 +32,21 @@ const CheckoutForm = ({ course }) => {
         }
       } catch (error) {
         setErrorMessage(getErrorMessage(error, 'Failed to initialize payment.'));
+      } finally {
+        setIntentLoading(false);
       }
     };
 
     createIntent();
-  }, [course]);
+  }, [course, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!stripe || !elements || !clientSecret) return;
+    if (!clientSecret) return;
 
     setIsProcessing(true);
     setErrorMessage('');
-
-    const cardElement = elements.getElement(CardElement);
 
     if (clientSecret.startsWith('mock_secret')) {
       try {
@@ -56,6 +58,14 @@ const CheckoutForm = ({ course }) => {
       }
       return;
     }
+
+    if (!stripe || !elements) {
+      setErrorMessage('Stripe publishable key is not configured for card payments.');
+      setIsProcessing(false);
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
 
     const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
       payment_method: {
@@ -76,6 +86,7 @@ const CheckoutForm = ({ course }) => {
           } 
         });
       } catch (confirmError) {
+        console.warn('Immediate enrollment confirmation failed after Stripe success', confirmError);
         // Even if this fails, the webhook might still succeed
         navigate('/dashboard', { 
           state: { 
@@ -88,6 +99,12 @@ const CheckoutForm = ({ course }) => {
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      {clientSecret.startsWith('mock_secret') ? (
+        <div className={styles.mockNotice}>
+          <ShieldCheck size={18} />
+          <span>Local mock checkout is active. No card details are required.</span>
+        </div>
+      ) : (
       <div className={styles.cardInputWrapper}>
         <div className={styles.inputLabel}>
           <CreditCard size={18} />
@@ -106,11 +123,16 @@ const CheckoutForm = ({ course }) => {
           }} />
         </div>
       </div>
+      )}
 
       {errorMessage && <p className={styles.error}>{errorMessage}</p>}
 
-      <button type="submit" className="btn-primary" disabled={!stripe || isProcessing || !clientSecret}>
-        {isProcessing ? <Loader2 className="animate-spin" size={20} /> : `Pay ₹${course.price.toLocaleString('en-IN')}`}
+      <button
+        type="submit"
+        className="btn-primary"
+        disabled={isProcessing || intentLoading || !clientSecret || (!clientSecret.startsWith('mock_secret') && !stripe)}
+      >
+        {isProcessing || intentLoading ? <Loader2 className="animate-spin" size={20} /> : `Pay ₹${course.price.toLocaleString('en-IN')}`}
       </button>
 
       <div className={styles.secureBadge}>

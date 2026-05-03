@@ -21,6 +21,43 @@
   margin: 0.35rem 0 0;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-white);
+}
+
+.filterBar button {
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.filterBar button:hover,
+.filterBar .activeFilter {
+  color: var(--color-primary);
+  background: rgba(15, 98, 254, 0.08);
+}
+
+.filterBar span {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .message {
   padding: 0.9rem 1rem;
   border: 1px solid var(--color-border);
@@ -62,7 +99,7 @@
   background: var(--color-white);
   border-radius: 8px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 1rem;
   align-items: center;
   padding: 1rem;
@@ -115,22 +152,61 @@
   white-space: nowrap;
 }
 
+.deleteAction {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.deleteAction:hover {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.pagination span {
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
 @media (max-width: 720px) {
   .header,
   .item {
     align-items: flex-start;
   }
 
-  .header {
+  .header,
+  .headerActions {
     flex-direction: column;
+  }
+
+  .headerActions {
+    align-items: stretch;
+    width: 100%;
   }
 
   .item {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .meta {
+  .meta,
+  .deleteAction {
     grid-column: 2;
     white-space: normal;
+  }
+
+  .filterBar span {
+    width: 100%;
+    margin-left: 0;
   }
 }

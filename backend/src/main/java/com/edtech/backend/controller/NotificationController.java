@@ -1,6 +1,7 @@
 package com.edtech.backend.controller;
 
 import com.edtech.backend.model.Notification;
+import com.edtech.backend.model.NotificationType;
 import com.edtech.backend.model.User;
 import com.edtech.backend.repository.UserRepository;
 import com.edtech.backend.security.UserPrincipal;
@@ -28,10 +29,12 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<Page<Notification>> getMyNotifications(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam(required = false) NotificationType type,
+            @RequestParam(required = false) Boolean unreadOnly,
             @PageableDefault(size = 10) Pageable pageable
     ) {
         User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
-        return ResponseEntity.ok(notificationService.getUserNotifications(user, pageable));
+        return ResponseEntity.ok(notificationService.getUserNotifications(user, type, unreadOnly, pageable));
     }
 
     @GetMapping("/unread-count")
@@ -55,5 +58,22 @@ public class NotificationController {
         User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
         notificationService.markAllAsRead(user);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteNotification(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
+        notificationService.deleteNotification(id, user);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/read")
+    public ResponseEntity<?> deleteReadNotifications(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
+        long deletedCount = notificationService.deleteReadNotifications(user);
+        return ResponseEntity.ok(Map.of("deletedCount", deletedCount));
     }
 }

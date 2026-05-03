@@ -4,6 +4,7 @@ import { BookOpen, ChevronDown, Menu, Sparkles, X, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import NotificationPanel from '../Notifications/NotificationPanel';
 import { notificationApi } from '../../services/api';
+import { ROLES, getRoleHomePath, getRoleLabel } from '../../utils/roles';
 import styles from './Navbar.module.css';
 
 const getLinks = (role) => {
@@ -12,7 +13,7 @@ const getLinks = (role) => {
     { label: 'Courses', path: '/courses' },
   ];
 
-  if (role === 'STUDENT') return [
+  if (role === ROLES.STUDENT) return [
     { label: 'Home', path: '/' },
     { label: 'Courses', path: '/courses' },
     { label: 'Live Classes', path: '/live-classes' },
@@ -20,14 +21,14 @@ const getLinks = (role) => {
     { label: 'Community', path: '/forum' },
   ];
 
-  if (role === 'INSTRUCTOR') return [
+  if (role === ROLES.INSTRUCTOR) return [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Create Course', path: '/instructor/create-course' },
     { label: 'Live Sessions', path: '/live-classes' }, // They can create here
     { label: 'User Analytics', path: '/admin/dashboard' }, // Re-using analytics
   ];
 
-  if (role === 'ADMIN') return [
+  if (role === ROLES.ADMIN) return [
     { label: 'System Control', path: '/admin/dashboard' },
     { label: 'Courses', path: '/courses' },
     { label: 'Settings', path: '/settings' },
@@ -35,8 +36,6 @@ const getLinks = (role) => {
 
   return [];
 };
-
-const getDashboardPath = (role) => (role === 'ADMIN' ? '/admin/dashboard' : '/dashboard');
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -125,14 +124,14 @@ const Navbar = () => {
                 <img src={user.profileImage || `https://ui-avatars.com/api/?background=0f62fe&color=fff&name=${encodeURIComponent(user.firstName || 'U')}`} alt={user.firstName || 'User'} />
                 <div className={styles.profileText}>
                   <strong>{user.firstName}</strong>
-                  <span>{user.role}</span>
+                  <span>{getRoleLabel(user.role)}</span>
                 </div>
                 <ChevronDown size={16} className={styles.chevron} />
               </button>
 
               {dropdownOpen && (
                 <div className={styles.dropdown}>
-                  <button onClick={() => handleNavigate(getDashboardPath(user?.role))}>Dashboard</button>
+                  <button onClick={() => handleNavigate(getRoleHomePath(user?.role))}>Dashboard</button>
                   <button onClick={() => handleNavigate('/settings')}>Settings</button>
                   <button onClick={() => handleNavigate('/settings/sessions')}>Sessions</button>
                   <hr />

@@ -42,6 +42,9 @@ public class AuthService {
     private JwtTokenProvider tokenProvider;
 
     @Autowired
+    private TOTPService totpService;
+
+    @Autowired
     private AuditLogService auditLogService;
 
     @Autowired
@@ -114,9 +117,14 @@ public class AuthService {
         }
 
         if (requiresOtp(user)) {
-            otpService.generateOTP(user.getEmail(), OTPRecord.OTPPurpose.LOGIN);
-            logAction(user.getId(), "LOGIN_OTP_SENT", "Pending privileged login verification", ipAddress);
-            return new JwtAuthenticationResponse(user.getRole().name(), true, "A verification code has been sent to your email.");
+            if ("APP".equalsIgnoreCase(user.getTwoFactorMethod())) {
+                logAction(user.getId(), "LOGIN_OTP_REQUIRED", "Pending authenticator app verification", ipAddress);
+                return new JwtAuthenticationResponse(user.getRole().name(), true, "Please enter the code from your authenticator app.");
+            } else {
+                otpService.generateOTP(user.getEmail(), OTPRecord.OTPPurpose.LOGIN);
+                logAction(user.getId(), "LOGIN_OTP_SENT", "Pending privileged login verification", ipAddress);
+                return new JwtAuthenticationResponse(user.getRole().name(), true, "A verification code has been sent to your email.");
+            }
         }
 
         user.setLastLoginAt(LocalDateTime.now());
@@ -245,9 +253,15 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean validOtp = otpService.verifyOTP(email, request.getOtp(), OTPRecord.OTPPurpose.LOGIN);
-        if (!validOtp) {
-            throw new RuntimeException("Invalid or expired OTP");
+        if ("APP".equalsIgnoreCase(user.getTwoFactorMethod())) {
+            if (!totpService.verifyCode(user.getTwoFactorSecret(), request.getOtp())) {
+                throw new RuntimeException("Invalid authentication code");
+            }
+        } else {
+            boolean validOtp = otpService.verifyOTP(email, request.getOtp(), OTPRecord.OTPPurpose.LOGIN);
+            if (!validOtp) {
+                throw new RuntimeException("Invalid or expired OTP");
+            }
         }
 
         user.setLastLoginAt(LocalDateTime.now());

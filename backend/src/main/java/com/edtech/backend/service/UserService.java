@@ -52,6 +52,9 @@ public class UserService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private TOTPService totpService;
+
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
@@ -146,6 +149,39 @@ public class UserService {
         return export;
     }
 
+    public Map<String, String> setup2FA(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        String secret = totpService.generateSecret();
+        user.setTwoFactorSecret(secret);
+        userRepository.save(user);
+
+        String qrUri = totpService.getQrCodeImageUri(secret, user.getEmail());
+        return Map.of("qrCode", qrUri, "secret", secret);
+    }
+
+    public void verify2FASetup(Long id, String code) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getTwoFactorSecret() == null) {
+            throw new RuntimeException("2FA setup not initiated");
+        }
+
+        if (!totpService.verifyCode(user.getTwoFactorSecret(), code)) {
+            throw new RuntimeException("Invalid authentication code");
+        }
+
+        user.setTwoFactorEnabled(true);
+        user.setTwoFactorMethod("APP");
+        userRepository.save(user);
+
+        notificationService.createNotification(user, "2FA Enabled", 
+            "Two-Factor Authentication via Authenticator App was successfully enabled.", 
+            NotificationType.SECURITY, "/settings");
+    }
+
     public List<User> getAllUsersForAdmin() {
         return userRepository.findAllByOrderByCreatedAtDesc();
     }
@@ -155,10 +191,16 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + targetUserId));
 
         if (request.getRole() != null) {
+            if (user.getRole() == Role.ADMIN && request.getRole() != Role.ADMIN) {
+                assertAnotherActiveAdmin(targetUserId, "Cannot change the last active admin to a non-admin role");
+            }
             user.setRole(request.getRole());
         }
 
         if (request.getActive() != null) {
+            if (user.getRole() == Role.ADMIN && !request.getActive()) {
+                assertAnotherActiveAdmin(targetUserId, "Cannot freeze the last active admin");
+            }
             user.setActive(request.getActive());
             if (!request.getActive()) {
                 sessionRepository.deleteByUser(user);
@@ -191,6 +233,10 @@ public class UserService {
     }
 
     public Map<String, String> impersonateUser(Long adminUserId, Long targetUserId) {
+        if (adminUserId.equals(targetUserId)) {
+            throw new RuntimeException("Cannot impersonate your own admin session");
+        }
+
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + targetUserId));
 
@@ -315,6 +361,10 @@ public class UserService {
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + targetUserId));
 
+        if (user.getRole() == Role.ADMIN) {
+            assertAnotherActiveAdmin(targetUserId, "Cannot delete the last active admin");
+        }
+
         // Delete related data first to avoid FK constraints
         sessionRepository.deleteByUser(user);
         otpRecordRepository.deleteByEmail(user.getEmail());
@@ -341,5 +391,14 @@ public class UserService {
     private String generateTemporaryPassword(String email) {
         String seed = email + UUID.randomUUID();
         return "EduRev@" + Integer.toHexString(seed.getBytes(StandardCharsets.UTF_8).length) + "1";
+    }
+
+    private void assertAnotherActiveAdmin(Long targetUserId, String message) {
+        boolean anotherActiveAdmin = userRepository.findByRole(Role.ADMIN).stream()
+                .anyMatch(user -> !user.getId().equals(targetUserId) && Boolean.TRUE.equals(user.isActive()));
+
+        if (!anotherActiveAdmin) {
+            throw new RuntimeException(message);
+        }
     }
 }

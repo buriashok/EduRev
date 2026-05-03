@@ -3,9 +3,8 @@ import { FileUp, LogIn, LogOut, ShieldAlert, Trash2, CheckCircle2, XCircle, Tren
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
 import { adminApi, analyticsApi, getErrorMessage } from '../../services/api';
+import { ROLE_OPTIONS } from '../../utils/roles';
 import styles from './AdminDashboard.module.css';
-
-const roleOptions = ['STUDENT', 'INSTRUCTOR', 'ADMIN'];
 
 const AdminDashboard = () => {
   const { assumeSession } = useAuth();
@@ -32,6 +31,7 @@ const AdminDashboard = () => {
     ],
     [stats, users],
   );
+  void summaryCards;
 
   const [activeTab, setActiveTab] = useState('overview');
   const [settings, setSettings] = useState({ siteName: 'EduRev', maintenanceMode: 'false', primaryColor: '#0f62fe' });
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
     try {
       await adminApi.updateSettings(settings);
       setMessage('Platform settings updated successfully.');
-    } catch (error) {
+    } catch {
       setMessage('Failed to update settings.');
     }
   };
@@ -83,7 +83,7 @@ const AdminDashboard = () => {
     try {
       await adminApi.deleteCourse(courseId);
       setCourses(curr => curr.filter(c => c.id !== courseId));
-    } catch (error) {
+    } catch {
       setMessage('Failed to delete course');
     }
   };
@@ -93,7 +93,7 @@ const AdminDashboard = () => {
       const res = await adminApi.updateCourseStatus(courseId, status);
       setCourses(curr => curr.map(c => c.id === courseId ? res.data : c));
       setMessage(`Course ${status.toLowerCase()} successfully.`);
-    } catch (error) {
+    } catch {
       setMessage('Failed to update course status.');
     }
   };
@@ -317,8 +317,8 @@ const AdminDashboard = () => {
                           onChange={(event) => handleRoleChange(user.id, event.target.value)}
                           disabled={busyUserId === user.id}
                         >
-                          {roleOptions.map((role) => (
-                            <option key={role} value={role}>{role}</option>
+                          {ROLE_OPTIONS.map((role) => (
+                            <option key={role.value} value={role.value}>{role.label}</option>
                           ))}
                         </select>
                       </td>

@@ -26,13 +26,13 @@ import Notifications from './pages/Shared/Notifications/Notifications';
 import VerifyCertificate from './pages/Public/VerifyCertificate/VerifyCertificate';
 import EduDashboard from './pages/EduRevolution/EduDashboard';
 import { adminApi } from './services/api';
+import { ROLES, getRoleHomePath, hasAnyRole } from './utils/roles';
 
 const RoleHome = () => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Home />;
-  if (user.role === 'INSTRUCTOR') return <Navigate to="/dashboard" replace />;
-  if (user.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
+  if (user.role === ROLES.INSTRUCTOR || user.role === ROLES.ADMIN) return <Navigate to={getRoleHomePath(user.role)} replace />;
   return <Home />;
 };
 
@@ -86,15 +86,15 @@ function AppContent() {
         <Route path="/verify/:uniqueId" element={<VerifyCertificate />} />
         <Route path="/register" element={<Register />} />
         <Route path="/courses" element={<Courses />} />
-        <Route path="/instructor/create-course" element={<RequireRole roles={['INSTRUCTOR', 'ADMIN']}><CreateCourse /></RequireRole>} />
-        <Route path="/instructor/students" element={<RequireRole roles={['INSTRUCTOR', 'ADMIN']}><StudentRoster /></RequireRole>} />
-        <Route path="/instructor/live-sessions" element={<RequireRole roles={['INSTRUCTOR', 'ADMIN']}><MyLiveSessions /></RequireRole>} />
-        <Route path="/instructor/live-classes/:id" element={<RequireRole roles={['INSTRUCTOR', 'ADMIN']}><LiveClassDetail /></RequireRole>} />
+        <Route path="/instructor/create-course" element={<RequireRole roles={[ROLES.INSTRUCTOR, ROLES.ADMIN]}><CreateCourse /></RequireRole>} />
+        <Route path="/instructor/students" element={<RequireRole roles={[ROLES.INSTRUCTOR, ROLES.ADMIN]}><StudentRoster /></RequireRole>} />
+        <Route path="/instructor/live-sessions" element={<RequireRole roles={[ROLES.INSTRUCTOR, ROLES.ADMIN]}><MyLiveSessions /></RequireRole>} />
+        <Route path="/instructor/live-classes/:id" element={<RequireRole roles={[ROLES.INSTRUCTOR, ROLES.ADMIN]}><LiveClassDetail /></RequireRole>} />
         <Route path="/quiz/:quizId" element={<Quiz />} />
         <Route path="/live-classes" element={<LiveClasses />} />
         <Route path="/forum" element={<Forum />} />
-        <Route path="/admin/dashboard" element={<RequireRole roles={['ADMIN']}><AdminDashboard /></RequireRole>} />
-        <Route path="/admin/users" element={<RequireRole roles={['ADMIN']}><UserManagement /></RequireRole>} />
+        <Route path="/admin/dashboard" element={<RequireRole roles={[ROLES.ADMIN]}><AdminDashboard /></RequireRole>} />
+        <Route path="/admin/users" element={<RequireRole roles={[ROLES.ADMIN]}><UserManagement /></RequireRole>} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/settings/sessions" element={<RequireAuth><SessionManager /></RequireAuth>} />
@@ -131,7 +131,7 @@ function RequireRole({ children, roles }) {
     return <Navigate to="/login" replace />;
   }
 
-  return roles.includes(user.role) ? children : <Navigate to="/dashboard" replace />;
+  return hasAnyRole(user, roles) ? children : <Navigate to={getRoleHomePath(user.role)} replace />;
 }
 
 export default App;

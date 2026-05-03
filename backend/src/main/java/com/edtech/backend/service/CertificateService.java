@@ -1,10 +1,14 @@
 package com.edtech.backend.service;
 
+import com.edtech.backend.dto.CertificateResponse;
 import com.edtech.backend.model.Certificate;
 import com.edtech.backend.model.Course;
+import com.edtech.backend.model.CourseProgress;
+import com.edtech.backend.model.Lesson;
 import com.edtech.backend.model.NotificationType;
 import com.edtech.backend.model.User;
 import com.edtech.backend.repository.CertificateRepository;
+import com.edtech.backend.repository.CourseProgressRepository;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
@@ -23,6 +27,9 @@ public class CertificateService {
 
     @Autowired
     private CertificateRepository certificateRepository;
+
+    @Autowired
+    private CourseProgressRepository progressRepository;
 
     @Autowired
     private NotificationService notificationService;
@@ -62,10 +69,45 @@ public class CertificateService {
         return saved;
     }
 
+    public Certificate issueCertificateForCompletedCourse(User user, Course course) throws Exception {
+        validateCourseCompleted(user, course);
+        return issueCertificate(user, course);
+    }
+
     public Optional<Certificate> verifyCertificate(String uniqueId) {
         if (uniqueId == null || uniqueId.isBlank()) {
             return Optional.empty();
         }
         return certificateRepository.findByUniqueId(uniqueId.trim());
+    }
+
+    public CertificateResponse toResponse(Certificate certificate) {
+        return CertificateResponse.from(certificate, buildVerificationUrl(certificate.getUniqueId()));
+    }
+
+    public String buildVerificationUrl(String uniqueId) {
+        return publicUrl.replaceAll("/$", "") + "/verify/" + uniqueId;
+    }
+
+    private void validateCourseCompleted(User user, Course course) {
+        if (course.getLessons() == null || course.getLessons().isEmpty()) {
+            throw new RuntimeException("This course does not have lessons to certify yet.");
+        }
+
+        if (!user.getEnrolledCourses().contains(course)) {
+            throw new RuntimeException("Enroll in this course before requesting a certificate.");
+        }
+
+        CourseProgress progress = progressRepository.findByUserAndCourse(user, course)
+                .orElseThrow(() -> new RuntimeException("Complete all lessons before requesting a certificate."));
+
+        long completedCount = progress.getCompletedLessons().stream()
+                .map(Lesson::getId)
+                .distinct()
+                .count();
+
+        if (completedCount < course.getLessons().size()) {
+            throw new RuntimeException("Complete all lessons before requesting a certificate.");
+        }
     }
 }

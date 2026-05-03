@@ -13,11 +13,12 @@ const NotificationPanel = ({ isOpen, onClose, onUnreadUpdate }) => {
 
   const fetchNotifications = async () => {
     setLoading(true);
+    setError('');
     try {
       const response = await notificationApi.getAll();
-      setNotifications(response.data.content);
-      const unreadCount = response.data.content.filter(n => !n.read).length;
-      if (onUnreadUpdate) onUnreadUpdate(unreadCount);
+      setNotifications(response.data.content || []);
+      const countResponse = await notificationApi.getUnreadCount();
+      if (onUnreadUpdate) onUnreadUpdate(countResponse.data.count || 0);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to load notifications'));
     } finally {
@@ -27,8 +28,10 @@ const NotificationPanel = ({ isOpen, onClose, onUnreadUpdate }) => {
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchNotifications();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   useEffect(() => {
@@ -63,6 +66,18 @@ const NotificationPanel = ({ isOpen, onClose, onUnreadUpdate }) => {
       if (onUnreadUpdate) onUnreadUpdate(0);
     } catch (err) {
       console.error('Failed to mark all as read', err);
+    }
+  };
+
+  const handleDelete = async (event, id) => {
+    event.stopPropagation();
+    try {
+      await notificationApi.delete(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      const countRes = await notificationApi.getUnreadCount();
+      if (onUnreadUpdate) onUnreadUpdate(countRes.data.count || 0);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to delete notification'));
     }
   };
 
@@ -110,6 +125,7 @@ const NotificationPanel = ({ isOpen, onClose, onUnreadUpdate }) => {
       </div>
 
       <div className={styles.content}>
+        {error && <div className={styles.error}>{error}</div>}
         {loading && notifications.length === 0 ? (
           <div className={styles.empty}>
             <div className="spinner" />
@@ -137,6 +153,15 @@ const NotificationPanel = ({ isOpen, onClose, onUnreadUpdate }) => {
                 <p>{n.message}</p>
                 {n.link && <span className={styles.actionText}>View details <ExternalLink size={12} /></span>}
               </div>
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={(event) => handleDelete(event, n.id)}
+                aria-label="Delete notification"
+                title="Delete notification"
+              >
+                <Trash2 size={14} />
+              </button>
               {!n.read && <div className={styles.unreadDot} />}
             </div>
           ))

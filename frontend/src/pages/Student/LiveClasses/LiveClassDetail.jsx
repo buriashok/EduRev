@@ -10,6 +10,7 @@ const LiveClassDetail = () => {
   const navigate = useNavigate();
   const [liveClass, setLiveClass] = useState(null);
   const [registrations, setRegistrations] = useState([]);
+  const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [recordingUrl, setRecordingUrl] = useState('');
@@ -17,12 +18,14 @@ const LiveClassDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classRes, regRes] = await Promise.all([
+        const [classRes, regRes, attRes] = await Promise.all([
           liveClassApi.getById(id),
-          liveClassApi.getRegistrations(id)
+          liveClassApi.getRegistrations(id),
+          liveClassApi.getAttendance(id).catch(() => ({ data: [] }))
         ]);
         setLiveClass(classRes.data);
         setRegistrations(regRes.data);
+        if (attRes?.data) setAttendance(attRes.data);
         if (classRes.data.recordingUrl) setRecordingUrl(classRes.data.recordingUrl);
       } catch (error) {
         setMessage(getErrorMessage(error, 'Failed to load class details.'));
@@ -80,6 +83,10 @@ const LiveClassDetail = () => {
                   <Users size={18} />
                   <span>{registrations.length} Students Registered</span>
                 </div>
+                <div className={styles.infoItem}>
+                  <CheckCircle2 size={18} />
+                  <span>{attendance?.length || 0} Attended</span>
+                </div>
               </div>
 
               <div className={styles.linkBox}>
@@ -132,6 +139,11 @@ const LiveClassDetail = () => {
                         <strong>{user.firstName} {user.lastName}</strong>
                         <span>{user.email}</span>
                       </div>
+                      {attendance?.some(a => a.id === user.id) && (
+                        <div style={{ marginLeft: 'auto', color: 'var(--color-success)' }} title="Attended">
+                          <CheckCircle2 size={16} />
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

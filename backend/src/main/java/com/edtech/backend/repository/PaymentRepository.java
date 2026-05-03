@@ -12,6 +12,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     java.util.Optional<Payment> findByStripePaymentIntentId(String stripePaymentIntentId);
     boolean existsByUserAndCourseAndStatus(User user, Course course, String status);
     java.util.List<Payment> findByStatus(String status);
+    java.util.Optional<Payment> findTopByUserAndCourseOrderByCreatedAtDesc(User user, Course course);
+    java.util.List<Payment> findByUserOrderByCreatedAtDesc(User user);
 
     @org.springframework.data.jpa.repository.Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'SUCCEEDED'")
     java.math.BigDecimal sumTotalSucceededRevenue();

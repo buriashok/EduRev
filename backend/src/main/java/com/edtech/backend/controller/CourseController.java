@@ -6,6 +6,7 @@ import com.edtech.backend.model.User;
 import com.edtech.backend.repository.CourseRepository;
 import com.edtech.backend.repository.CourseReviewRepository;
 import com.edtech.backend.repository.UserRepository;
+import com.edtech.backend.security.RoleAccess;
 import com.edtech.backend.security.UserPrincipal;
 import com.edtech.backend.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +37,7 @@ public class CourseController {
     @GetMapping
     public List<Course> getAllCourses(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         // Admins can see all, others only APPROVED
-        if (userPrincipal != null && userPrincipal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+        if (RoleAccess.isAdmin(userPrincipal)) {
             return withRatings(courseRepository.findAll());
         }
         return withRatings(courseRepository.findByStatus(CourseStatus.APPROVED));
@@ -75,8 +75,7 @@ public class CourseController {
     public ResponseEntity<Course> getCourseById(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return courseRepository.findById(id).map(course -> {
             // Check if course is approved OR user is admin OR user is the instructor
-            boolean isAdmin = userPrincipal != null && userPrincipal.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            boolean isAdmin = RoleAccess.isAdmin(userPrincipal);
             boolean isInstructor = userPrincipal != null && course.getInstructor().getId().equals(userPrincipal.getId());
             
             if (course.getStatus() == CourseStatus.APPROVED || isAdmin || isInstructor) {
@@ -93,8 +92,7 @@ public class CourseController {
         course.setInstructor(instructor);
         
         // Admins can auto-approve their own courses, instructors are pending
-        boolean isAdmin = userPrincipal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = RoleAccess.isAdmin(userPrincipal);
         course.setStatus(isAdmin ? CourseStatus.APPROVED : CourseStatus.PENDING);
         
         if (course.getLessons() != null) {
@@ -130,6 +128,9 @@ public class CourseController {
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestBody Course courseDetails, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return courseRepository.findById(id).map(course -> {
+            if (!RoleAccess.canManageInstructorContent(userPrincipal, course.getInstructor().getId())) {
+                return ResponseEntity.status(403).<Course>build();
+            }
             course.setTitle(courseDetails.getTitle());
             course.setDescription(courseDetails.getDescription());
             course.setPrice(courseDetails.getPrice());
@@ -156,8 +157,11 @@ public class CourseController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteCourse(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCourse(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return courseRepository.findById(id).map(course -> {
+            if (!RoleAccess.canManageInstructorContent(userPrincipal, course.getInstructor().getId())) {
+                return ResponseEntity.status(403).build();
+            }
             User instructor = course.getInstructor();
             String title = course.getTitle();
             courseRepository.delete(course);

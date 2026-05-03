@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
+import { ROLES, SELF_SERVICE_ROLE_OPTIONS } from '../../../utils/roles';
 import styles from './Register.module.css';
 
 const Register = () => {
@@ -17,7 +18,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'STUDENT',
+    role: ROLES.STUDENT,
     goals: '',
     agreedToTerms: false,
   });
@@ -110,10 +111,10 @@ const Register = () => {
           <h2 className={styles.formTitle}>Create your account</h2>
 
           <div className={styles.roleSelector}>
-            {['STUDENT', 'INSTRUCTOR'].map((role) => (
-              <label key={role} className={`${styles.roleOption} ${formData.role === role ? styles.roleActive : ''}`}>
-                <input type="radio" name="role" value={role} checked={formData.role === role} onChange={handleChange} />
-                <span>{role === 'STUDENT' ? 'Student' : 'Instructor'}</span>
+            {SELF_SERVICE_ROLE_OPTIONS.map((role) => (
+              <label key={role.value} className={`${styles.roleOption} ${formData.role === role.value ? styles.roleActive : ''}`}>
+                <input type="radio" name="role" value={role.value} checked={formData.role === role.value} onChange={handleChange} />
+                <span>{role.label}</span>
                 <div className={styles.radioCircle} />
               </label>
             ))}

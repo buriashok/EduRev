@@ -35,7 +35,7 @@ const Certificate = () => {
     if (navigator.share) {
       await navigator.share({
         title: 'EduRev Certificate',
-        text: `Verify ${certificate.user.firstName} ${certificate.user.lastName}'s EduRev certificate`,
+        text: `Verify ${certificate.studentName}'s EduRev certificate`,
         url: verificationUrl,
       });
       return;
@@ -94,12 +94,12 @@ const Certificate = () => {
             </div>
 
             <div className={styles.studentName}>
-              {certificate.user.firstName} {certificate.user.lastName}
+              {certificate.studentName}
             </div>
 
             <div className={styles.description}>
               <p>has successfully completed the course</p>
-              <h3>{certificate.course.title}</h3>
+              <h3>{certificate.courseTitle}</h3>
               <p>with exceptional performance and dedication to mastering the subject matter.</p>
             </div>
 
@@ -107,7 +107,7 @@ const Certificate = () => {
               <div className={styles.signature}>
                 <div className={styles.sigLine} />
                 <p>Course Instructor</p>
-                <strong>{certificate.course.instructor.firstName} {certificate.course.instructor.lastName}</strong>
+                <strong>{certificate.instructorName}</strong>
               </div>
 
               <div className={styles.seal}>
@@ -127,7 +127,7 @@ const Certificate = () => {
 
             <div className={styles.verify}>
               <span>Certificate ID: {certificate.uniqueId}</span>
-              <span>Verify at {verificationUrl}</span>
+              <span>Verify at {certificate.verificationUrl || verificationUrl}</span>
             </div>
           </div>
         </div>

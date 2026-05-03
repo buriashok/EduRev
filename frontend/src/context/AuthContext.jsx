@@ -2,16 +2,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, getErrorMessage, userApi } from '../services/api';
+import { getRoleHomePath } from '../utils/roles';
 
 const AuthContext = createContext();
-
-const getDefaultRedirect = (role) => {
-  if (role === 'ADMIN') {
-    return '/admin/dashboard';
-  }
-
-  return '/dashboard';
-};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -56,7 +49,7 @@ export const AuthProvider = ({ children }) => {
       setPendingOtp(null);
 
       const currentUser = await refreshUser();
-      navigate(getDefaultRedirect(role || currentUser.role));
+      navigate(getRoleHomePath(role || currentUser.role));
 
       return { success: true, user: currentUser };
     } catch (error) {
@@ -80,7 +73,7 @@ export const AuthProvider = ({ children }) => {
       setPendingOtp(null);
 
       const currentUser = await refreshUser();
-      navigate(getDefaultRedirect(role || currentUser.role));
+      navigate(getRoleHomePath(role || currentUser.role));
       return { success: true, user: currentUser };
     } catch (error) {
       return { success: false, message: getErrorMessage(error, 'OTP verification failed') };
@@ -104,7 +97,7 @@ export const AuthProvider = ({ children }) => {
 
   const assumeSession = async ({ role }) => {
     const currentUser = await refreshUser();
-    navigate(getDefaultRedirect(role || currentUser.role));
+    navigate(getRoleHomePath(role || currentUser.role));
     return currentUser;
   };
 

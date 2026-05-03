@@ -68,6 +68,8 @@ export const authApi = {
 };
 
 export const userApi = {
+  setup2FA: () => api.get('/api/users/me/2fa/setup'),
+  verify2FA: (code) => api.post('/api/users/me/2fa/verify', { code }),
   getMe: () => api.get('/api/users/me'),
   getMyCourses: () => api.get('/api/users/me/courses'),
   updateProfile: (data) => api.put('/api/users/me', data),
@@ -134,6 +136,7 @@ export const liveClassApi = {
   getById: (id) => api.get(`/api/live-classes/${id}`),
   register: (id) => api.post(`/api/live-classes/${id}/register`),
   getRegistrations: (id) => api.get(`/api/live-classes/${id}/registrations`),
+  getAttendance: (id) => api.get(`/api/live-classes/${id}/attendance`),
   complete: (id, recordingUrl) => api.post(`/api/live-classes/${id}/complete`, { recordingUrl }),
   join: (id) => api.post(`/api/live-classes/${id}/join`),
   create: (data) => api.post('/api/live-classes', data),
@@ -152,6 +155,7 @@ export const certificateApi = {
   getMyCertificates: () => api.get('/api/certificates/my'),
   getById: (id) => api.get(`/api/certificates/${id}`),
   verify: (uniqueId) => api.get(`/api/certificates/verify/${uniqueId}`),
+  issueForCourse: (courseId) => api.post(`/api/certificates/course/${courseId}/issue`),
 };
 
 export const eduApi = {
@@ -179,13 +183,17 @@ export const progressApi = {
 export const paymentApi = {
   createIntent: (courseId) => api.post(`/api/payments/create-intent/${courseId}`),
   confirm: (courseId, paymentIntentId) => api.post(`/api/payments/confirm/${courseId}`, { paymentIntentId }),
+  getStatus: (courseId) => api.get(`/api/payments/status/${courseId}`),
+  getHistory: () => api.get('/api/payments/history'),
 };
 
 export const notificationApi = {
-  getAll: (page = 0) => api.get('/api/notifications', { params: { page } }),
+  getAll: (page = 0, filters = {}) => api.get('/api/notifications', { params: { page, ...filters } }),
   getUnreadCount: () => api.get('/api/notifications/unread-count'),
   markAsRead: (id) => api.patch(`/api/notifications/${id}/read`),
   markAllAsRead: () => api.patch('/api/notifications/read-all'),
+  delete: (id) => api.delete(`/api/notifications/${id}`),
+  deleteRead: () => api.delete('/api/notifications/read'),
 };
 
 export { getErrorMessage };

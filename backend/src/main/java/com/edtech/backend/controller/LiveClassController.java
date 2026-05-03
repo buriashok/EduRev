@@ -5,6 +5,7 @@ import com.edtech.backend.model.NotificationType;
 import com.edtech.backend.model.User;
 import com.edtech.backend.repository.LiveClassRepository;
 import com.edtech.backend.repository.UserRepository;
+import com.edtech.backend.security.RoleAccess;
 import com.edtech.backend.security.UserPrincipal;
 import com.edtech.backend.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class LiveClassController {
     @GetMapping("/mine")
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public List<LiveClass> getMyClasses(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        if (userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+        if (RoleAccess.isAdmin(userPrincipal)) {
             return liveClassRepository.findAll();
         }
         return liveClassRepository.findByInstructorIdOrderByStartTimeDesc(userPrincipal.getId());
@@ -107,11 +108,21 @@ public class LiveClassController {
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getRegistrations(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return liveClassRepository.findById(id).map(liveClass -> {
-            if (!liveClass.getInstructor().getId().equals(userPrincipal.getId()) && 
-                !userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            if (!RoleAccess.canManageInstructorContent(userPrincipal, liveClass.getInstructor().getId())) {
                 return ResponseEntity.status(403).build();
             }
             return ResponseEntity.ok(liveClass.getRegisteredUsers());
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/attendance")
+    @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getAttendance(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return liveClassRepository.findById(id).map(liveClass -> {
+            if (!RoleAccess.canManageInstructorContent(userPrincipal, liveClass.getInstructor().getId())) {
+                return ResponseEntity.status(403).build();
+            }
+            return ResponseEntity.ok(liveClass.getAttendedUsers());
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -119,8 +130,7 @@ public class LiveClassController {
     @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<?> completeClass(@PathVariable Long id, @RequestBody Map<String, String> payload, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         return liveClassRepository.findById(id).map(liveClass -> {
-            if (!liveClass.getInstructor().getId().equals(userPrincipal.getId()) && 
-                !userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            if (!RoleAccess.canManageInstructorContent(userPrincipal, liveClass.getInstructor().getId())) {
                 return ResponseEntity.status(403).build();
             }
             
@@ -155,13 +165,25 @@ public class LiveClassController {
                 .map(liveClass -> {
                     boolean isInstructor = liveClass.getInstructor() != null
                             && liveClass.getInstructor().getId().equals(userPrincipal.getId());
-                    boolean isAdmin = userPrincipal.getAuthorities().stream()
-                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                    boolean isAdmin = RoleAccess.isAdmin(userPrincipal);
                     boolean isRegistered = liveClass.getRegisteredUsers().stream()
                             .anyMatch(user -> user.getId().equals(userPrincipal.getId()));
 
                     if (!isInstructor && !isAdmin && !isRegistered) {
                         return ResponseEntity.status(403).body(Map.of("message", "Register for this live class before joining."));
+                    }
+
+                    // Auto-record attendance for registered students
+                    if (!isInstructor && !isAdmin) {
+                        User user = userRepository.findById(userPrincipal.getId()).orElse(null);
+                        if (user != null) {
+                            boolean alreadyAttended = liveClass.getAttendedUsers().stream()
+                                    .anyMatch(u -> u.getId().equals(user.getId()));
+                            if (!alreadyAttended) {
+                                liveClass.getAttendedUsers().add(user);
+                                liveClassRepository.save(liveClass);
+                            }
+                        }
                     }
 
                     return ResponseEntity.ok().body(Map.of(

@@ -11,6 +11,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { ROLES, getRoleLabel } from '../../utils/roles';
 import styles from './Sidebar.module.css';
 
 const Sidebar = () => {
@@ -19,7 +20,7 @@ const Sidebar = () => {
 
   const getLinks = (role) => {
     switch (role) {
-      case 'STUDENT':
+      case ROLES.STUDENT:
         return [
           { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
           { label: 'My Courses', icon: <BookOpen size={20} />, path: '/courses' },
@@ -28,7 +29,7 @@ const Sidebar = () => {
           { label: 'Community', icon: <MessageSquare size={20} />, path: '/forum' },
           { label: 'EDU-Revolution', icon: <GraduationCap size={20} />, path: '/edu-revolution' },
         ];
-      case 'INSTRUCTOR':
+      case ROLES.INSTRUCTOR:
         return [
           { label: 'Management', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
           { label: 'Create Course', icon: <PlusCircle size={20} />, path: '/instructor/create-course' },
@@ -37,7 +38,7 @@ const Sidebar = () => {
           { label: 'EDU-Revolution', icon: <GraduationCap size={20} />, path: '/edu-revolution' },
           { label: 'Settings', icon: <Settings size={20} />, path: '/settings' },
         ];
-      case 'ADMIN':
+      case ROLES.ADMIN:
         return [
           { label: 'System Overview', icon: <LayoutDashboard size={20} />, path: '/admin/dashboard' },
           { label: 'User Management', icon: <Users size={20} />, path: '/admin/users' },
@@ -88,7 +89,7 @@ const Sidebar = () => {
           <img src={user.profileImage || `https://ui-avatars.com/api/?name=${user.firstName}`} alt="User" />
           <div className={styles.userInfo}>
             <strong>{user.firstName}</strong>
-            <span>{user.role}</span>
+            <span>{getRoleLabel(user.role)}</span>
           </div>
         </div>
       </div>

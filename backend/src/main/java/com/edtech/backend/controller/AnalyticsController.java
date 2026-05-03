@@ -27,7 +27,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/instructor")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('INSTRUCTOR')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('INSTRUCTOR') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getInstructorStats(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         return ResponseEntity.ok(analyticsService.getInstructorAnalytics(userPrincipal.getId()));
     }

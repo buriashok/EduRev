@@ -29,6 +29,9 @@ public class CourseProgressController {
     private LessonRepository lessonRepository;
 
     @Autowired
+    private CertificateRepository certificateRepository;
+
+    @Autowired
     private CertificateService certificateService;
 
     @GetMapping("/{courseId}")
@@ -46,10 +49,17 @@ public class CourseProgressController {
                     newProgress.setCourse(course);
                     return progressRepository.save(newProgress);
                 });
+        Certificate certificate = certificateRepository.findByUserAndCourseId(user, courseId).orElse(null);
+        int lessonCount = course.getLessons() == null ? 0 : course.getLessons().size();
+        int completedCount = progress.getCompletedLessons().size();
 
         return ResponseEntity.ok(Map.of(
                 "completedLessonIds", progress.getCompletedLessons().stream().map(Lesson::getId).collect(Collectors.toSet()),
-                "lastAccessed", progress.getLastAccessed()
+                "lastAccessed", progress.getLastAccessed(),
+                "lessonCount", lessonCount,
+                "completedCount", completedCount,
+                "courseCompleted", lessonCount > 0 && completedCount >= lessonCount,
+                "certificateId", certificate == null ? "" : certificate.getId()
         ));
     }
 
